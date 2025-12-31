@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - {{ user.username }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        /* Fluid Typography */
+        @media (min-width: 320px) {
+            html {
+                font-size: calc(16px + 2 * ((100vw - 320px) / 1600));
+            }
+        }
+
+        @media (min-width: 1920px) {
+            html {
+                font-size: 18px;
+            }
+        }
+
+        :root {
+            --primary: #38bdf8;
+            --secondary: #0ea5e9;
+            --sky-light: #7dd3fc;
+            --sky-dark: #0284c7;
+
+            /* Light mode colors */
+            --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 50%, #38bdf8 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border-color: #1e293b;
+            --input-bg: #fff;
+            --table-row-bg: #f8fafc;
+            --table-row-hover: #e0f2fe;
+        }
+
+        body {
+            font-family: 'Patrick Hand', cursive;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            transition: background 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-gradient: linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0369a1 100%);
+            --card-bg: rgba(15, 23, 42, 0.95);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #38bdf8;
+            --input-bg: #1e293b;
+            --table-row-bg: #1e293b;
+            --table-row-hover: rgba(56, 189, 248, 0.1);
+        }
+
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+        }
+
+        /* Navigation - Sketchy Style */
+        .navbar {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 3px 3px 0px rgba(56, 189, 248, 0.3);
+            border: 3px solid var(--border-color);
+            border-radius: 15px 5px 15px 5px;
+            margin: 1rem;
+            transform: rotate(-0.5deg);
+        }
+
+        .logo {
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transform: rotate(1deg);
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            transform: rotate(-5deg);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(5deg) scale(1.1);
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.4);
+        }
+
+        .nav-btn {
+            padding: 0.6rem 1.3rem;
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 12px 3px 12px 3px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.2s;
+            font-size: 1rem;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+            transform: rotate(0.5deg);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            transform: rotate(-1deg) translateY(-2px);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Content */
+        .content-container {
+            max-width: min(1200px, 95vw);
+            margin: 2rem auto;
+            padding: 0 clamp(1rem, 3vw, 2rem);
+            width: 100%;
+        }
+
+        .profile-header {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px 8px 20px 8px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.4);
+            border: 3px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            transform: rotate(-0.3deg);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-name {
+            font-family: 'Caveat', cursive;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+            transform: rotate(0.5deg);
+        }
+
+        .profile-username {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .profile-bio {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 18px 6px 18px 6px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.3);
+            border: 3px solid var(--border-color);
+            transition: all 0.3s;
+            transform: rotate(-0.5deg);
+        }
+
+        .stat-card:hover {
+            transform: rotate(0.5deg) translateY(-5px);
+            box-shadow: 5px 5px 0px rgba(56, 189, 248, 0.4);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
+            filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.1));
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* History Section */
+        .history-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px 8px 20px 8px;
+            padding: 2.5rem;
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.4);
+            border: 3px solid var(--border-color);
+            transform: rotate(-0.2deg);
+        }
+
+        .section-title {
+            font-family: 'Caveat', cursive;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            transform: rotate(0.5deg);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.8rem;
+        }
+
+        .history-table thead th {
+            text-align: left;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-bottom: 1rem;
+        }
+
+        .history-table tbody tr {
+            background: var(--table-row-bg);
+            transition: all 0.3s;
+        }
+
+        .history-table tbody tr:hover {
+            background: var(--table-row-hover);
+            transform: translateX(5px);
+        }
+
+        .history-table tbody td {
+            padding: 1.2rem 1rem;
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
+
+        .history-table tbody tr td:first-child {
+            border-radius: 10px 0 0 10px;
+            font-weight: 700;
+            color: var(--text-primary);
+            border-left: 3px solid var(--border-color);
+        }
+
+        .history-table tbody tr td:last-child {
+            border-radius: 0 10px 10px 0;
+            border-right: 3px solid var(--border-color);
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border-radius: 15px 5px 15px 5px;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--border-color);
+            transform: rotate(-2deg);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .view-details-btn {
+            padding: 0.6rem 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border: 3px solid var(--border-color);
+            border-radius: 12px 4px 12px 4px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            font-family: 'Patrick Hand', cursive;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+            transform: rotate(-1deg);
+        }
+
+        .view-details-btn:hover {
+            transform: rotate(1deg) translateY(-2px);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Quiz Details Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px 8px 20px 8px;
+            padding: 2.5rem;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 5px 5px 0px rgba(56, 189, 248, 0.5);
+            border: 3px solid var(--border-color);
+            animation: slideIn 0.3s ease;
+            margin: 1rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) rotate(-2deg);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) rotate(-0.5deg);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-family: 'Caveat', cursive;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            transform: rotate(0.5deg);
+        }
+
+        .close-btn {
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Patrick Hand', cursive;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-btn:hover {
+            background: #f56565;
+            color: #fff;
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        .quiz-detail-item {
+            background: var(--table-row-bg);
+            border-radius: 15px 5px 15px 5px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+            border: 3px solid var(--border-color);
+            box-shadow: 2px 2px 0px rgba(56, 189, 248, 0.2);
+            transform: rotate(-0.3deg);
+        }
+
+        .question-header {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.15rem;
+        }
+
+        .answer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.9rem;
+            background: var(--card-bg);
+            border-radius: 10px 3px 10px 3px;
+            margin-bottom: 0.5rem;
+            border: 2px solid var(--border-color);
+        }
+
+        .answer-label {
+            font-weight: 700;
+            color: var(--text-secondary);
+            min-width: 120px;
+        }
+
+        .answer-value {
+            flex: 1;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .answer-correct {
+            color: #15803d;
+            font-weight: 700;
+        }
+
+        .answer-wrong {
+            color: #b91c1c;
+            font-weight: 700;
+        }
+
+        .result-icon {
+            font-size: 1.5rem;
+            margin-left: 1rem;
+        }
+
+        .modal-score-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            padding: 1.5rem;
+            border-radius: 15px 5px 15px 5px;
+            margin-bottom: 2rem;
+            text-align: center;
+            border: 3px solid var(--border-color);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+            transform: rotate(-0.5deg);
+        }
+
+        .modal-score-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-score-meta {
+            margin-top: 1rem;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+                margin: 0.5rem;
+            }
+
+            .nav-right {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+            }
+
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 2.5rem;
+            }
+
+            .profile-name {
+                font-size: 2rem;
+            }
+
+            .profile-username {
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.5rem;
+            }
+
+            .history-card {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                max-height: 90vh;
+                margin: 1rem;
+            }
+
+            .history-table {
+                font-size: 0.9rem;
+                display: block;
+                overflow-x: auto;
+            }
+
+            .history-table tbody td {
+                padding: 0.8rem 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .view-details-btn {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            input {
+                font-size: 16px;
+                /* Prevents zoom on iOS */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-container {
+                padding: 0 1rem;
+            }
+
+            .navbar {
+                margin: 0.25rem;
+                padding: 0.8rem;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .nav-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .theme-toggle {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .profile-header {
+                padding: 1rem;
+            }
+
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+            }
+
+            .profile-name {
+                font-size: 1.6rem;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
+
+            .stat-label {
+                font-size: 0.85rem;
+            }
+
+            .history-table thead {
+                display: none;
+            }
+
+            .history-table tbody tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 3px solid var(--border-color);
+                border-radius: 12px;
+                padding: 1rem;
+            }
+
+            .history-table tbody td {
+                display: block;
+                text-align: left;
+                padding: 0.5rem 0;
+                border: none !important;
+                border-radius: 0 !important;
+            }
+
+            .history-table tbody td:before {
+                content: attr(data-label);
+                font-weight: 700;
+                display: inline-block;
+                width: 100px;
+                color: var(--text-secondary);
+            }
+
+            .modal-header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .modal-title {
+                font-size: 1.4rem;
+            }
+
+            .modal-body {
+                padding: 1rem;
+            }
+
+            .quiz-detail-item {
+                padding: 1rem;
+            }
+
+            .answer-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-bg"></div>
+
+    <div class="main-wrapper">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="logo">
+                <span>🎓</span>
+                StudyVerse
+            </div>
+            <div class="nav-right">
+                <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+                    <span id="themeIcon">🌙</span>
+                </div>
+                <a href="/" class="nav-btn">← Back to Home</a>
+            </div>
+        </nav>
+
+        <!-- Content -->
+        <div class="content-container">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    👤
+                </div>
+                <div class="profile-info">
+                    <h1 class="profile-name">{{ user.full_name }}</h1>
+                    <div class="profile-username">@{{ user.username }} • Member since {{ user.created_at[:10] }}</div>
+                    <p class="profile-bio">{{ user.bio if user.bio else 'Welcome to StudyVerse!' }}</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value">{{ user.streak }}</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value">{{ user.total_quizzes }}</div>
+                    <div class="stat-label">Quizzes Completed</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value">{{ user.correct_answers }}/{{ user.total_questions }}</div>
+                    <div class="stat-label">Correct Answers</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value">{{ user.total_study_time }}</div>
+                    <div class="stat-label">Minutes Studied</div>
+                </div>
+            </div>
+
+            <!-- Study History -->
+            <div class="history-card">
+                <h2 class="section-title">📚 Recent Study History</h2>
+
+                {% if history %}
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Topic</th>
+                            <th>Score</th>
+                            <th>Duration</th>
+                            <th>Date</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history %}
+                        <tr>
+                            <td data-label="Topic">{{ item.topic }}</td>
+                            <td data-label="Score"><span class="score-badge">{{ item.score }}</span></td>
+                            <td data-label="Duration">{{ item.study_duration }} min</td>
+                            <td data-label="Date">{{ item.timestamp[:16] }}</td>
+                            <td data-label="Details">
+                                <button class="view-details-btn" onclick="viewQuizDetails({{ item.id }})">
+                                    View Quiz
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📖</div>
+                    <p>No study history yet. Start learning to see your progress!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Details Modal -->
+    <div id="quizModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Quiz Details</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div id="quizDetailsContent">
+                <!-- Quiz details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Dark Mode Toggle
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThreeJSColors(isDark);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeIcon').textContent = '☀️';
+        }
+
+        // Enhanced Three.js Background - More Visible
+        const canvas = document.getElementById('canvas-bg');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        canvas.appendChild(renderer.domElement);
+
+        // Enhanced Particles - More Visible
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 3000;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 100;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.7,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        // Enhanced Torus - Sky Blue
+        const torusGeometry = new THREE.TorusGeometry(10, 2.5, 16, 100);
+        const torusMaterial = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.4
+        });
+        const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+        scene.add(torus);
+
+        // Enhanced Icosahedron - Light Sky Blue
+        const icoGeometry = new THREE.IcosahedronGeometry(8, 0);
+        const icoMaterial = new THREE.MeshBasicMaterial({
+            color: 0x7dd3fc,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const icosahedron = new THREE.Mesh(icoGeometry, icoMaterial);
+        icosahedron.position.set(-15, 10, -20);
+        scene.add(icosahedron);
+
+        // Add Octahedron
+        const octaGeometry = new THREE.OctahedronGeometry(8, 0);
+        const octaMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0ea5e9,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.25
+        });
+        const octahedron = new THREE.Mesh(octaGeometry, octaMaterial);
+        octahedron.position.set(15, -10, -20);
+        scene.add(octahedron);
+
+        camera.position.z = 35;
+
+        function updateThreeJSColors(isDark) {
+            if (isDark) {
+                torusMaterial.color.setHex(0x0ea5e9);
+                icoMaterial.color.setHex(0x38bdf8);
+                octaMaterial.color.setHex(0x7dd3fc);
+                particlesMaterial.opacity = 0.8;
+            } else {
+                torusMaterial.color.setHex(0x38bdf8);
+                icoMaterial.color.setHex(0x7dd3fc);
+                octaMaterial.color.setHex(0x0ea5e9);
+                particlesMaterial.opacity = 0.7;
+            }
+        }
+
+        // Initialize colors based on saved theme
+        if (savedTheme === 'dark') {
+            updateThreeJSColors(true);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particlesMesh.rotation.y += 0.0008;
+            particlesMesh.rotation.x += 0.0004;
+            torus.rotation.x += 0.004;
+            torus.rotation.y += 0.003;
+            icosahedron.rotation.x += 0.002;
+            icosahedron.rotation.y += 0.003;
+            octahedron.rotation.x += 0.003;
+            octahedron.rotation.y += 0.002;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Quiz Details Functions
+        async function viewQuizDetails(historyId) {
+            try {
+                const response = await fetch(`/api/get_quiz_history/${historyId}`);
+                const data = await response.json();
+
+                if (data.success && data.quiz_data) {
+                    displayQuizDetails(data);
+                } else {
+                    alert('No quiz details available for this entry');
+                }
+            } catch (error) {
+                console.error('Error loading quiz details:', error);
+                alert('Failed to load quiz details');
+            }
+        }
+
+        function displayQuizDetails(data) {
+            const modal = document.getElementById('quizModal');
+            const title = document.getElementById('modalTitle');
+            const content = document.getElementById('quizDetailsContent');
+
+            title.textContent = `Quiz: ${data.topic}`;
+
+            let html = `
+                <div class="modal-score-card">
+                    <div class="modal-score-value">${data.score}</div>
+                    <div style="font-size: 1.1rem; opacity: 0.95;">Score</div>
+                    <div class="modal-score-meta">
+                        📅 ${data.timestamp} • ⏱️ ${data.study_duration} minutes
+                    </div>
+                </div>
+            `;
+
+            const quizData = data.quiz_data;
+
+            if (quizData && quizData.questions) {
+                quizData.questions.forEach((question, index) => {
+                    const userAnswer = quizData.user_answers[index];
+                    const correctAnswer = quizData.correct_answers[index];
+                    const isCorrect = quizData.results[index];
+
+                    html += `
+                        <div class="quiz-detail-item">
+                            <div class="question-header">
+                                Question ${index + 1}: ${question}
+                            </div>
+                            <div class="answer-row">
+                                <span class="answer-label">Your Answer:</span>
+                                <span class="answer-value ${isCorrect ? 'answer-correct' : 'answer-wrong'}">
+                                    ${userAnswer}
+                                </span>
+                                <span class="result-icon">${isCorrect ? '✅' : '❌'}</span>
+                            </div>
+                            ${!isCorrect ? `
+                                <div class="answer-row">
+                                    <span class="answer-label">Correct Answer:</span>
+                                    <span class="answer-value answer-correct">${correctAnswer}</span>
+                                    <span class="result-icon">✓</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p style="text-align: center; color: var(--text-secondary);">No detailed quiz data available</p>';
+            }
+
+            content.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('quizModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('quizModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+
+</html>

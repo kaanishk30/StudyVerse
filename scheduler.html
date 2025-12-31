@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Scheduler - Generate Smart Study Plans</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        /* Fluid Typography */
+        @media (min-width: 320px) {
+            html {
+                font-size: calc(16px + 2 * ((100vw - 320px) / 1600));
+            }
+        }
+
+        @media (min-width: 1920px) {
+            html {
+                font-size: 18px;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            color: #1a202c;
+            overflow-x: hidden;
+        }
+
+        .nav {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .streak {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: min(1400px, 95vw);
+            margin: 2rem auto;
+            padding: 0 clamp(1rem, 3vw, 2rem);
+            width: 100%;
+        }
+
+        .hero {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #4a5568;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .tab-btn:hover:not(.active) {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="time"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .schedule-preview {
+            display: none;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 1.5rem;
+            background: #f7fafc;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            margin-left: 1rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 1.5rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #667eea;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-date {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .topic-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid #667eea;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .difficulty-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .difficulty-easy {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .difficulty-medium {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .difficulty-hard {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .topic-info {
+            flex: 1;
+        }
+
+        .topic-title {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+
+        .topic-unit {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .time-info {
+            text-align: right;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .time-info .hours {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+                padding: 0 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav-right {
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+
+            .nav-link {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .tab-buttons {
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+
+            .tab-btn {
+                padding: 0.8rem;
+                font-size: 0.95rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            input[type="date"],
+            input[type="time"],
+            textarea,
+            select {
+                font-size: 16px;
+                /* Prevents zoom on iOS */
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+
+            .stat-card {
+                padding: 1.2rem;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
+
+            .timeline {
+                padding-left: 1.5rem;
+            }
+
+            .timeline-item {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .timeline-item::before {
+                left: -2rem;
+                width: 15px;
+                height: 15px;
+            }
+
+            .topic-card {
+                grid-template-columns: 1fr;
+                text-align: left;
+                gap: 0.8rem;
+            }
+
+            .time-info {
+                text-align: left;
+            }
+
+            .topic-card>div:last-child {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav {
+                padding: 0.8rem;
+            }
+
+            .logo {
+                font-size: 1.1rem;
+            }
+
+            .streak {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            .nav-link {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.85rem;
+            }
+
+            .container {
+                padding: 0 0.8rem;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+
+            .hero p {
+                font-size: 0.9rem;
+            }
+
+            .card {
+                padding: 1rem;
+                border-radius: 15px;
+            }
+
+            .tab-btn {
+                padding: 0.7rem;
+                font-size: 0.9rem;
+            }
+
+            label {
+                font-size: 0.95rem;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            input[type="date"],
+            input[type="time"],
+            textarea,
+            select {
+                padding: 0.8rem;
+                font-size: 16px;
+            }
+
+            textarea {
+                min-height: 120px;
+            }
+
+            .btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.95rem;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+
+            .stat-label {
+                font-size: 0.85rem;
+            }
+
+            .timeline {
+                padding-left: 1rem;
+            }
+
+            .timeline::before {
+                width: 2px;
+            }
+
+            .timeline-item {
+                padding: 0.8rem;
+                margin-left: 0.5rem;
+            }
+
+            .timeline-item::before {
+                left: -1.5rem;
+                width: 12px;
+                height: 12px;
+                border-width: 3px;
+            }
+
+            .timeline-date {
+                font-size: 1rem;
+            }
+
+            .topic-card {
+                padding: 0.8rem;
+            }
+
+            .topic-title {
+                font-size: 0.95rem;
+            }
+
+            .topic-unit {
+                font-size: 0.8rem;
+            }
+
+            .difficulty-badge {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.6rem;
+            }
+
+            .btn-danger {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            .empty-icon {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="logo">
+            <span>🎓</span>
+            <span>AI Study Scheduler</span>
+        </div>
+        <div class="nav-right">
+            <div class="streak">
+                <span>🔥</span>
+                <span id="streakDays">{{ user.streak }} Days</span>
+            </div>
+            <a href="/" class="nav-link">🏠 Home</a>
+            <a href="/profile" class="nav-link">👤 Profile</a>
+            <a href="/logout" class="nav-link">🚪 Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>🤖 AI-Powered Study Scheduler</h1>
+            <p>Automatically generate optimized study plans with difficulty-based time allocation</p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTopics">0</div>
+                <div class="stat-label">Total Topics</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalDays">0</div>
+                <div class="stat-label">Study Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalHours">0h</div>
+                <div class="stat-label">Total Hours</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="completedTopics">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+
+        <!-- Tab Buttons -->
+        <div class="card">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('auto')">🤖 AI Generate Schedule</button>
+                <button class="tab-btn" onclick="switchTab('manual')">✏️ Add Manual Entry</button>
+                <button class="tab-btn" onclick="switchTab('view')">📅 View Schedule</button>
+            </div>
+
+            <!-- AI Generate Tab -->
+            <div class="tab-content active" id="autoTab">
+                <form id="aiScheduleForm">
+                    <div class="form-group">
+                        <label>📚 Subject Name</label>
+                        <input type="text" name="subject" placeholder="e.g., Data Structures, Physics, History..."
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 Paste Your Syllabus or Topics List</label>
+                        <textarea name="syllabus"
+                            placeholder="Example:&#10;&#10;Unit 1: Introduction to Data Structures&#10;- Arrays and Linked Lists&#10;- Stacks and Queues&#10;- Trees and Graphs&#10;&#10;Unit 2: Algorithms&#10;- Sorting Algorithms&#10;- Searching Algorithms&#10;- Dynamic Programming&#10;&#10;You can also paste unstructured topic lists!"
+                            required></textarea>
+                        <small style="color: #718096; margin-top: 0.5rem; display: block;">💡 AI will automatically
+                            detect units, estimate difficulty (Easy/Medium/Hard), and allocate time accordingly</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>📅 Start Date</label>
+                            <input type="date" name="start_date" id="startDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>⏰ Total Days Available</label>
+                            <input type="number" name="total_days" placeholder="e.g., 30" min="1" max="365" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">✨ Generate AI Schedule</button>
+                </form>
+            </div>
+
+            <!-- Manual Entry Tab -->
+            <div class="tab-content" id="manualTab">
+                <form id="manualScheduleForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <input type="text" name="subject" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Name (Optional)</label>
+                            <input type="text" name="unit_name">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Topic Name</label>
+                        <input type="text" name="topic_name" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Difficulty</label>
+                            <select name="difficulty" required>
+                                <option value="easy">Easy (2 hours)</option>
+                                <option value="medium" selected>Medium (3 hours)</option>
+                                <option value="hard">Hard (4 hours)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" name="scheduled_date" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Start Time</label>
+                            <input type="time" name="start_time" value="09:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Time</label>
+                            <input type="time" name="end_time" value="11:00" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes (Optional)</label>
+                        <textarea name="notes" rows="3" placeholder="Chapter 5, pages 120-145..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">➕ Add to Schedule</button>
+                </form>
+            </div>
+
+            <!-- View Schedule Tab -->
+            <div class="tab-content" id="viewTab">
+                <div style="text-align: right; margin-bottom: 1rem;">
+                    <button class="btn btn-secondary" onclick="exportSchedule()">📥 Export Schedule</button>
+                </div>
+                <div id="scheduleTimeline"></div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="color: #4a5568; font-size: 1.1rem;">🤖 AI is generating your personalized schedule...</p>
+        </div>
+
+        <!-- Schedule Preview (after AI generation) -->
+        <div class="schedule-preview card" id="schedulePreview">
+            <h2 style="margin-bottom: 1.5rem;">📋 Generated Schedule Preview</h2>
+            <div id="previewContent"></div>
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button class="btn btn-primary" onclick="saveSchedule()">✅ Save Schedule</button>
+                <button class="btn" style="background: #cbd5e0; color: #2d3748;"
+                    onclick="closePreview()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let generatedSchedule = [];
+        let currentSchedule = [];
+
+        // Set default start date to today
+        document.getElementById('startDate').valueAsDate = new Date();
+
+        // Load initial data
+        loadSchedule();
+        loadStreak();
+
+        function switchTab(tab) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tab === 'auto') {
+                document.getElementById('autoTab').classList.add('active');
+            } else if (tab === 'manual') {
+                document.getElementById('manualTab').classList.add('active');
+            } else if (tab === 'view') {
+                document.getElementById('viewTab').classList.add('active');
+                loadSchedule();
+            }
+        }
+
+        // AI Schedule Generation
+        document.getElementById('aiScheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch('/api/generate_schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    alert('❌ ' + result.error);
+                    return;
+                }
+
+                generatedSchedule = result.schedule;
+                displaySchedulePreview(result.schedule);
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+
+        // Manual Schedule Entry
+        document.getElementById('manualScheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.is_auto_generated = 0;
+
+            // Set estimated hours based on difficulty
+            const difficultyHours = { easy: 2, medium: 3, hard: 4 };
+            data.estimated_hours = difficultyHours[data.difficulty] || 3;
+
+            try {
+                const response = await fetch('/api/add_schedule_item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('✅ Schedule item added!');
+                    e.target.reset();
+                    loadSchedule();
+                    switchTab('view');
+                } else {
+                    alert('❌ Failed to add item');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        function displaySchedulePreview(schedule) {
+            const preview = document.getElementById('previewContent');
+            const grouped = {};
+
+            schedule.forEach(item => {
+                const date = item.scheduled_date;
+                if (!grouped[date]) grouped[date] = [];
+                grouped[date].push(item);
+            });
+
+            let html = '<div class="timeline">';
+
+            Object.keys(grouped).sort().forEach(date => {
+                const items = grouped[date];
+                const dateObj = new Date(date);
+                const formattedDate = dateObj.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                });
+
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div class="timeline-date">${formattedDate}</div>
+                        </div>
+                `;
+
+                items.forEach(item => {
+                    html += `
+                        <div class="topic-card">
+                            <span class="difficulty-badge difficulty-${item.difficulty}">${item.difficulty}</span>
+                            <div class="topic-info">
+                                <div class="topic-title">${item.topic_name}</div>
+                                <div class="topic-unit">${item.unit_name || item.subject}</div>
+                            </div>
+                            <div class="time-info">
+                                <div>${item.start_time} - ${item.end_time}</div>
+                                <div class="hours">${item.estimated_hours}h</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            preview.innerHTML = html;
+
+            document.getElementById('schedulePreview').style.display = 'block';
+            document.getElementById('schedulePreview').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function saveSchedule() {
+            try {
+                const response = await fetch('/api/save_bulk_schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ schedule: generatedSchedule })
+                });
+
+                if (response.ok) {
+                    alert('✅ Schedule saved successfully!');
+                    closePreview();
+                    loadSchedule();
+                    switchTab('view');
+                } else {
+                    alert('❌ Failed to save schedule');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function closePreview() {
+            document.getElementById('schedulePreview').style.display = 'none';
+            generatedSchedule = [];
+        }
+
+        async function loadSchedule() {
+            try {
+                const response = await fetch('/api/get_schedule');
+                const data = await response.json();
+                currentSchedule = data.schedule || [];
+                renderSchedule(currentSchedule);
+                updateStats(currentSchedule);
+            } catch (error) {
+                console.error('Error loading schedule:', error);
+            }
+        }
+
+        function renderSchedule(schedule) {
+            const container = document.getElementById('scheduleTimeline');
+
+            if (schedule.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📅</div>
+                        <h3>No schedule yet</h3>
+                        <p>Generate an AI schedule or add topics manually</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const grouped = {};
+            schedule.forEach(item => {
+                const date = item.scheduled_date;
+                if (!grouped[date]) grouped[date] = [];
+                grouped[date].push(item);
+            });
+
+            let html = '<div class="timeline">';
+
+            Object.keys(grouped).sort().forEach(date => {
+                const items = grouped[date];
+                const dateObj = new Date(date + 'T00:00:00');
+                const formattedDate = dateObj.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                html += `
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <div class="timeline-date">${formattedDate}</div>
+                        </div>
+                `;
+
+                items.forEach(item => {
+                    const statusIcon = item.status === 'completed' ? '✅' : '⭕';
+                    const opacity = item.status === 'completed' ? 'opacity: 0.6;' : '';
+
+                    html += `
+                        <div class="topic-card" style="${opacity}">
+                            <span class="difficulty-badge difficulty-${item.difficulty}">${item.difficulty}</span>
+                            <div class="topic-info">
+                                <div class="topic-title">${statusIcon} ${item.topic_name}</div>
+                                <div class="topic-unit">${item.unit_name || item.subject}</div>
+                                ${item.notes ? `<div style="font-size: 0.85rem; color: #718096; margin-top: 0.25rem;">${item.notes}</div>` : ''}
+                            </div>
+                            <div class="time-info">
+                                <div>${item.start_time} - ${item.end_time}</div>
+                                <div class="hours">${item.estimated_hours}h</div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                ${item.status !== 'completed' ?
+                            `<button class="btn btn-secondary" onclick="markCompleted(${item.id})" style="padding: 0.5rem 1rem; font-size: 0.85rem;">✓</button>`
+                            : ''}
+                                <button class="btn btn-danger" onclick="deleteItem(${item.id})">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function updateStats(schedule) {
+            const totalTopics = schedule.length;
+            const completed = schedule.filter(s => s.status === 'completed').length;
+            const totalHours = schedule.reduce((sum, s) => sum + (s.estimated_hours || 0), 0);
+
+            // Calculate unique days
+            const uniqueDates = [...new Set(schedule.map(s => s.scheduled_date))];
+            const totalDays = uniqueDates.length;
+
+            document.getElementById('totalTopics').textContent = totalTopics;
+            document.getElementById('totalDays').textContent = totalDays;
+            document.getElementById('totalHours').textContent = totalHours + 'h';
+            document.getElementById('completedTopics').textContent = completed;
+        }
+
+        async function markCompleted(id) {
+            try {
+                const response = await fetch(`/api/complete_schedule/${id}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    loadSchedule();
+                    loadStreak(); // Update streak when completing tasks
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('Delete this schedule item?')) return;
+
+            try {
+                const response = await fetch(`/api/delete_schedule/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadSchedule();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function loadStreak() {
+            try {
+                const response = await fetch('/api/get_streak');
+                const data = await response.json();
+                document.getElementById('streakDays').textContent = data.streak + ' Days';
+            } catch (error) {
+                console.error('Error loading streak:', error);
+            }
+        }
+
+        async function exportSchedule() {
+            window.location.href = '/api/export_schedule';
+        }
+    </script>
+</body>
+
+</html>

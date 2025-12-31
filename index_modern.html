@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - StudyVerse</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Indie+Flower&family=Caveat:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        /* Fluid Typography for better scaling */
+        @media (min-width: 320px) {
+            html {
+                font-size: calc(16px + 2 * ((100vw - 320px) / 1600));
+            }
+        }
+
+        @media (min-width: 1920px) {
+            html {
+                font-size: 18px;
+            }
+        }
+
+        :root {
+            --primary: #38bdf8;
+            --secondary: #0ea5e9;
+            --sky-light: #7dd3fc;
+            --sky-dark: #0284c7;
+            --success: #48bb78;
+            --error: #f56565;
+            --warning: #ed8936;
+
+            /* Light mode colors */
+            --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #7dd3fc 50%, #38bdf8 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border-color: #1e293b;
+            --input-bg: #fff;
+        }
+
+        body {
+            font-family: 'Patrick Hand', cursive;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            /* Dynamic viewport height for mobile */
+            transition: background 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-gradient: linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0369a1 100%);
+            --card-bg: rgba(15, 23, 42, 0.95);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #38bdf8;
+            --input-bg: #1e293b;
+        }
+
+        body.dark-mode {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+        }
+
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        /* Navigation - Sketchy Style */
+        .navbar {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 3px 3px 0px rgba(56, 189, 248, 0.3);
+            border: 3px solid var(--border-color);
+            border-radius: 15px 5px 15px 5px;
+            margin: 1rem;
+            transform: rotate(-0.5deg);
+        }
+
+        .logo {
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transform: rotate(1deg);
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            transform: rotate(-5deg);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(5deg) scale(1.1);
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.4);
+        }
+
+        .streak-badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px 5px 20px 5px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--border-color);
+            transform: rotate(-1deg);
+            font-size: 1.1rem;
+        }
+
+        .nav-btn {
+            padding: 0.6rem 1.3rem;
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 12px 3px 12px 3px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.2s;
+            font-size: 1rem;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+            transform: rotate(0.5deg);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            transform: rotate(-1deg) translateY(-2px);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Content - Sketchy Style */
+        .content-container {
+            max-width: min(1400px, 95vw);
+            margin: 2rem auto;
+            padding: 0 clamp(1rem, 3vw, 2rem);
+            width: 100%;
+        }
+
+        .hero-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px 8px 20px 8px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.4);
+            border: 3px solid var(--border-color);
+            transform: rotate(-0.3deg);
+        }
+
+        .hero-title {
+            font-family: 'Caveat', cursive;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            transform: rotate(0.5deg);
+        }
+
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        /* Motivational Quote Card - Sketchy Style */
+        .motivation-card {
+            background: linear-gradient(135deg, rgba(224, 242, 254, 0.9) 0%, rgba(186, 230, 253, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 18px 6px 18px 6px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.3);
+            border: 3px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+            animation: slideIn 0.6s ease-out;
+            transform: rotate(0.3deg);
+        }
+
+        body.dark-mode .motivation-card {
+            background: linear-gradient(135deg, rgba(12, 74, 110, 0.9) 0%, rgba(7, 89, 133, 0.9) 100%);
+        }
+
+        .motivation-card:hover {
+            transform: rotate(-0.2deg) translateY(-3px);
+            box-shadow: 5px 5px 0px rgba(56, 189, 248, 0.4);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .quote-emoji {
+            font-size: 3.5rem;
+            flex-shrink: 0;
+            animation: bounce 2s ease-in-out infinite;
+            filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.1));
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-5deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+        }
+
+        .quote-text {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        .refresh-quote-btn {
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+            transform: rotate(-5deg);
+        }
+
+        .refresh-quote-btn:hover {
+            background: var(--primary);
+            transform: rotate(180deg) scale(1.1);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Tab Navigation - Sketchy Style */
+        .tab-nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #1e293b;
+            border-radius: 15px 5px 15px 5px;
+            color: #1e293b;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 1.05rem;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+            transform: rotate(-0.5deg);
+        }
+
+        .tab-btn:hover {
+            transform: rotate(0.5deg) translateY(-3px);
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.4);
+            background: rgba(224, 242, 254, 0.95);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border-color: #1e293b;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+            transform: rotate(1deg);
+        }
+
+        .tab-icon {
+            font-size: 2.2rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.1));
+        }
+
+        /* Plan Tab Buttons */
+        .plan-tab-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-family: 'Patrick Hand', cursive;
+        }
+
+        .plan-tab-btn:hover {
+            color: var(--primary);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .plan-tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        /* Content Views */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 18px 6px 18px 6px;
+            padding: 2rem;
+            box-shadow: 4px 4px 0px rgba(56, 189, 248, 0.3);
+            border: 3px solid var(--border-color);
+            transform: rotate(-0.2deg);
+        }
+
+        .card-title {
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            transform: rotate(0.5deg);
+        }
+
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.3rem;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 1.05rem;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--input-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 12px 4px 12px 4px;
+            color: var(--text-primary);
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.05rem;
+            transition: all 0.3s;
+            outline: none;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--primary);
+            background: rgba(224, 242, 254, 0.3);
+            box-shadow: 3px 3px 0px rgba(56, 189, 248, 0.3);
+            transform: rotate(-0.3deg);
+        }
+
+        body.dark-mode input:focus,
+        body.dark-mode textarea:focus,
+        body.dark-mode select:focus {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 1.1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: 3px solid var(--border-color);
+            border-radius: 15px 5px 15px 5px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Patrick Hand', cursive;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+            transform: rotate(-0.5deg);
+        }
+
+        .btn-primary:hover {
+            transform: rotate(0.5deg) translateY(-2px);
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: rotate(0deg) translateY(0px);
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+        }
+
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Output Panel */
+        .output-panel {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .schedule-item,
+        .summary-segment {
+            background: #f7fafc;
+            border-left: 4px solid var(--primary);
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .summary-segment {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .summary-segment::after {
+            content: '🔍 Click to expand';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 0.85rem;
+            color: var(--primary);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .schedule-item:hover,
+        .summary-segment:hover {
+            background: rgba(224, 242, 254, 0.5);
+            transform: translateX(5px) rotate(0.3deg);
+        }
+
+        .summary-segment:hover::after {
+            opacity: 1;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 20px 8px 20px 8px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 17px 5px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+            flex: 1;
+        }
+
+        .modal-counter {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 2rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        .modal-body h3 {
+            margin-top: 0;
+        }
+
+        .modal-body ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal-body ul li {
+            padding: 0.8rem 0;
+            padding-left: 2rem;
+            position: relative;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .modal-body ul li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Scrollbar styling for modal */
+        .modal-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 2px solid #e2e8f0;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-title {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .difficulty-badge {
+            padding: 0.4rem 0.9rem;
+            border-radius: 12px 4px 12px 4px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 2px solid #1e293b;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+            transform: rotate(-2deg);
+        }
+
+        .difficulty-easy {
+            background: #86efac;
+            color: #14532d;
+        }
+
+        .difficulty-medium {
+            background: #fde047;
+            color: #713f12;
+        }
+
+        .difficulty-hard {
+            background: #fca5a5;
+            color: #7f1d1d;
+        }
+
+        .item-meta {
+            display: flex;
+            gap: 1rem;
+            color: #475569;
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        /* Quiz - Sketchy Style */
+        .quiz-question {
+            background: var(--card-bg);
+            border-radius: 15px 5px 15px 5px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 3px solid var(--border-color);
+            box-shadow: 3px 3px 0px rgba(56, 189, 248, 0.2);
+            transform: rotate(-0.3deg);
+        }
+
+        .question-number {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .question-text {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1.15rem;
+        }
+
+        .option {
+            padding: 1rem;
+            background: var(--input-bg);
+            border: 3px solid var(--border-color);
+            border-radius: 12px 4px 12px 4px;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+            transform: rotate(-0.2deg);
+            font-size: 1.05rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        body.dark-mode .option {
+            color: #1e293b;
+            background: #e0f2fe;
+        }
+
+        .option:hover {
+            border-color: var(--primary);
+            background: rgba(224, 242, 254, 0.8);
+            transform: rotate(0.2deg) translateX(3px);
+            box-shadow: 3px 3px 0px rgba(56, 189, 248, 0.3);
+        }
+
+        body.dark-mode .option:hover {
+            background: #bae6fd;
+            color: #0c4a6e;
+        }
+
+        .option.selected {
+            border-color: var(--primary);
+            background: rgba(186, 230, 253, 0.8);
+            box-shadow: 3px 3px 0px rgba(56, 189, 248, 0.4);
+            transform: rotate(0.5deg);
+        }
+
+        body.dark-mode .option.selected {
+            background: #7dd3fc;
+            color: #0c4a6e;
+        }
+
+        .option.correct {
+            border-color: #15803d;
+            background: #86efac;
+            color: #14532d;
+            box-shadow: 3px 3px 0px rgba(21, 128, 61, 0.3);
+        }
+
+        .option.wrong {
+            border-color: #b91c1c;
+            background: #fca5a5;
+            color: #7f1d1d;
+            box-shadow: 3px 3px 0px rgba(185, 28, 28, 0.3);
+        }
+
+        .correct-answer {
+            margin-top: 0.8rem;
+            padding: 1rem;
+            background: #d1fae5;
+            border: 3px solid #15803d;
+            border-radius: 12px 4px 12px 4px;
+            color: #14532d;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 2px 2px 0px rgba(21, 128, 61, 0.2);
+        }
+
+        .result-summary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            padding: 2rem;
+            border-radius: 18px 6px 18px 6px;
+            border: 3px solid #1e293b;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+            transform: rotate(-0.5deg);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .result-score {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-text {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive Design - Mobile First */
+        @media (max-width: 1200px) {
+            .content-container {
+                max-width: 100%;
+                padding: 0 1.5rem;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .split-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-nav {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 0.8rem;
+            }
+
+            .tab-btn {
+                padding: 1.2rem 0.8rem;
+                font-size: 0.95rem;
+            }
+
+            .tab-icon {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+                margin: 0.5rem;
+            }
+
+            .nav-right {
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .hero-card {
+                padding: 1.5rem;
+            }
+
+            .motivation-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+            }
+
+            .quote-emoji {
+                font-size: 2.5rem;
+            }
+
+            .quote-text {
+                font-size: 1.1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .card-title {
+                font-size: 1.5rem;
+            }
+
+            input,
+            textarea,
+            select {
+                font-size: 16px;
+                /* Prevents zoom on iOS */
+            }
+
+            .modal-content {
+                margin: 1rem;
+                max-height: 90vh;
+            }
+
+            .modal-body {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-container {
+                padding: 0 1rem;
+            }
+
+            .navbar {
+                margin: 0.25rem;
+                padding: 0.8rem;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .nav-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .theme-toggle {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .streak-badge {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .hero-title {
+                font-size: 1.6rem;
+            }
+
+            .hero-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .tab-nav {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-btn {
+                padding: 1rem;
+            }
+
+            .motivation-card {
+                padding: 1rem;
+            }
+
+            .quote-text {
+                font-size: 1rem;
+            }
+
+            .refresh-quote-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .modal-header {
+                padding: 1rem;
+            }
+
+            .modal-title {
+                font-size: 1.4rem;
+            }
+
+            .modal-body ul li {
+                font-size: 1rem;
+                padding-left: 1.5rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-bg"></div>
+
+    <div class="main-wrapper">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="logo">
+                <span>🎓</span>
+                StudyVerse
+            </div>
+            <div class="nav-right">
+                <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+                    <span id="themeIcon">🌙</span>
+                </div>
+                <div class="streak-badge">
+                    🔥 <span>{{ user.streak if user else 0 }} Days</span>
+                </div>
+                <a href="/profile" class="nav-btn">Profile</a>
+                <a href="/logout" class="nav-btn">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Content -->
+        <div class="content-container">
+            <div class="hero-card">
+                <h1 class="hero-title">Hello, {{ user.username if user else 'Learner' }} 👋</h1>
+                <p class="hero-subtitle">Ready to continue your learning journey?</p>
+            </div>
+
+            <!-- Motivational Quote -->
+            <div class="motivation-card" id="motivationCard">
+                <div class="quote-emoji" id="quoteEmoji">{{ quote.emoji if quote else '✨' }}</div>
+                <div class="quote-text" id="quoteText">{{ quote.quote if quote else 'You\'ve got this! Keep learning and
+                    growing!' }}</div>
+                <button class="refresh-quote-btn" onclick="refreshQuote()" title="Get new quote">
+                    🔄
+                </button>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('home')">
+                    <span class="tab-icon">🏠</span>
+                    Home
+                </button>
+                <button class="tab-btn" onclick="switchTab('plan')">
+                    <span class="tab-icon">📅</span>
+                    Planner
+                </button>
+                <button class="tab-btn" onclick="switchTab('summary')">
+                    <span class="tab-icon">✨</span>
+                    Summarizer & Quiz
+                </button>
+            </div>
+
+            <!-- Views -->
+            <div id="view-home" class="view-section active">
+                <div class="card">
+                    <h2 class="card-title">Welcome Back</h2>
+                    <p style="color: #718096;">Select a module from the tabs above to get started.</p>
+                </div>
+            </div>
+
+            <div id="view-plan" class="view-section">
+                <div class="split-layout">
+                    <div class="card">
+                        <h2 class="card-title">Create Study Plan</h2>
+
+                        <!-- Tab Navigation for AI vs Manual -->
+                        <div
+                            style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
+                            <button class="plan-tab-btn active" onclick="switchPlanTab('ai')"
+                                style="flex: 1; padding: 0.75rem; border: none; background: none; cursor: pointer; font-weight: 600; color: #4a5568; border-bottom: 3px solid transparent; transition: all 0.3s;">
+                                🤖 AI Generate
+                            </button>
+                            <button class="plan-tab-btn" onclick="switchPlanTab('manual')"
+                                style="flex: 1; padding: 0.75rem; border: none; background: none; cursor: pointer; font-weight: 600; color: #4a5568; border-bottom: 3px solid transparent; transition: all 0.3s;">
+                                ✏️ Manual Entry
+                            </button>
+                        </div>
+
+                        <!-- AI Generation Form -->
+                        <form id="planForm" class="plan-form-section active">
+                            <div class="form-group">
+                                <label class="form-label">Subject</label>
+                                <input type="text" id="planSubject" placeholder="e.g. Physics" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Total Days</label>
+                                <input type="number" id="planDays" value="7" min="1" max="365">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Syllabus</label>
+                                <textarea id="planSyllabus" placeholder="Paste your syllabus here..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary">Generate Schedule</button>
+                        </form>
+
+                        <!-- Manual Entry Form -->
+                        <form id="manualPlanForm" class="plan-form-section" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">Subject</label>
+                                <input type="text" id="manualSubject" placeholder="e.g. Mathematics" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Topic Name</label>
+                                <input type="text" id="manualTopic" placeholder="e.g. Calculus Basics" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Unit Name (Optional)</label>
+                                <input type="text" id="manualUnit" placeholder="e.g. Unit 1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" id="manualDate" required>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label class="form-label">Start Time</label>
+                                    <input type="time" id="manualStartTime" value="09:00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">End Time</label>
+                                    <input type="time" id="manualEndTime" value="11:00" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Difficulty</label>
+                                <select id="manualDifficulty"
+                                    style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem;">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Estimated Hours</label>
+                                <input type="number" id="manualHours" value="2" min="1" max="12" step="0.5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Notes (Optional)</label>
+                                <textarea id="manualNotes" placeholder="Add any notes or reminders..."
+                                    style="min-height: 80px;"></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary">Add to Schedule</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2 class="card-title" style="margin: 0;">Your Schedule</h2>
+                            <button onclick="downloadPlanner()" class="btn-primary"
+                                style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; display: none;"
+                                id="downloadPlanBtn">
+                                📥 Download
+                            </button>
+                        </div>
+                        <div id="planOutput" class="output-panel">
+                            <p style="color: #a0aec0; text-align: center; margin-top: 2rem;">
+                                Your study schedule will appear here
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-summary" class="view-section">
+                <div class="card">
+                    <h2 class="card-title">Summarizer & Quiz</h2>
+                    <form id="summaryForm" style="margin-bottom: 2rem;">
+                        <div class="form-group">
+                            <label class="form-label">Topic / Question</label>
+                            <input type="text" name="query" placeholder="e.g. Photosynthesis" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Your Notes (Optional)</label>
+                            <textarea name="user_notes" placeholder="Paste your notes..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Upload Files (Optional)</label>
+                            <input type="file" name="files" multiple>
+                        </div>
+                        <button type="submit" class="btn-primary">Generate Summary</button>
+                    </form>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="color: #2d3748; font-size: 1.2rem; margin: 0;">Summary</h3>
+                        <button onclick="downloadSummary()" class="btn-primary"
+                            style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem; display: none;"
+                            id="downloadSummaryBtn">
+                            📥 Download Summary
+                        </button>
+                    </div>
+
+                    <div id="summaryOutput" class="output-panel">
+                        <p style="color: #a0aec0; text-align: center; margin-top: 2rem;">
+                            AI summary will appear here
+                        </p>
+                    </div>
+
+                    <!-- Quiz Container (shown when quiz is active) -->
+                    <div id="quizContainer"
+                        style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e2e8f0;">
+                        <div id="quizContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p style="color: #718096;">Processing...</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Enhanced Three.js Background - More Visible
+        const canvas = document.getElementById('canvas-bg');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        canvas.appendChild(renderer.domElement);
+
+        // Enhanced Particles - More Visible
+        const geometry = new THREE.BufferGeometry();
+        const vertices = [];
+        for (let i = 0; i < 3000; i++) {
+            vertices.push((Math.random() - 0.5) * 100);
+            vertices.push((Math.random() - 0.5) * 100);
+            vertices.push((Math.random() - 0.5) * 100);
+        }
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+        const material = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.15,  // Increased from 0.08
+            transparent: true,
+            opacity: 0.7,  // Increased from 0.3
+            blending: THREE.AdditiveBlending
+        });
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // Enhanced Torus - Sky Blue
+        const torusGeo = new THREE.TorusGeometry(10, 2.5, 16, 100);
+        const torusMat = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,  // Sky blue
+            wireframe: true,
+            transparent: true,
+            opacity: 0.4  // Increased from 0.1
+        });
+        const torus = new THREE.Mesh(torusGeo, torusMat);
+        scene.add(torus);
+
+        // Enhanced Icosahedron - Light Sky Blue
+        const sphereGeo = new THREE.IcosahedronGeometry(12, 1);
+        const sphereMat = new THREE.MeshBasicMaterial({
+            color: 0x7dd3fc,  // Light sky blue
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3  // Increased from 0.1
+        });
+        const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+        scene.add(sphere);
+
+        // Add another geometric shape for depth
+        const octaGeo = new THREE.OctahedronGeometry(8, 0);
+        const octaMat = new THREE.MeshBasicMaterial({
+            color: 0x0ea5e9,  // Deeper sky blue
+            wireframe: true,
+            transparent: true,
+            opacity: 0.25
+        });
+        const octahedron = new THREE.Mesh(octaGeo, octaMat);
+        octahedron.position.set(15, -10, -20);
+        scene.add(octahedron);
+
+        camera.position.z = 40;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.y += 0.0008;
+            particles.rotation.x += 0.0004;
+            torus.rotation.x += 0.004;
+            torus.rotation.y += 0.003;
+            sphere.rotation.y += 0.002;
+            sphere.rotation.x += 0.001;
+            octahedron.rotation.x += 0.003;
+            octahedron.rotation.y += 0.002;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Dark Mode Toggle
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThreeJSColors(isDark);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeIcon').textContent = '☀️';
+        }
+
+        // Update Three.js colors based on theme
+        function updateThreeJSColors(isDark) {
+            if (isDark) {
+                torusMat.color.setHex(0x0ea5e9);
+                sphereMat.color.setHex(0x38bdf8);
+                octaMat.color.setHex(0x7dd3fc);
+                material.opacity = 0.8;
+            } else {
+                torusMat.color.setHex(0x38bdf8);
+                sphereMat.color.setHex(0x7dd3fc);
+                octaMat.color.setHex(0x0ea5e9);
+                material.opacity = 0.7;
+            }
+        }
+
+        // Initialize colors based on saved theme
+        if (savedTheme === 'dark') {
+            updateThreeJSColors(true);
+        }
+
+        // Tab Switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
+
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            document.getElementById('view-' + tab).classList.add('active');
+        }
+
+        // Motivational Quotes
+        const motivationalQuotes = [
+            { quote: "You've got this! Every expert was once a beginner.", emoji: "🌟" },
+            { quote: "Small progress is still progress. Keep going!", emoji: "🚀" },
+            { quote: "Believe in yourself. You're capable of amazing things!", emoji: "💪" },
+            { quote: "Learning is a journey, not a race. Take your time!", emoji: "🎯" },
+            { quote: "Your future self will thank you for studying today!", emoji: "✨" },
+            { quote: "Mistakes are proof that you're trying. Keep learning!", emoji: "🌈" },
+            { quote: "You're doing better than you think. Stay positive!", emoji: "😊" },
+            { quote: "Every study session brings you closer to your goals!", emoji: "🎓" },
+            { quote: "Take a deep breath. You're exactly where you need to be.", emoji: "🌸" },
+            { quote: "Your dedication today creates your success tomorrow!", emoji: "🏆" },
+            { quote: "Learning something new? That's courage in action!", emoji: "🦁" },
+            { quote: "Progress, not perfection. You're on the right path!", emoji: "🛤️" },
+            { quote: "Take breaks when needed. Rest is part of growth!", emoji: "☕" },
+            { quote: "You're building your future, one lesson at a time!", emoji: "🏗️" },
+            { quote: "Celebrate small wins! They lead to big achievements!", emoji: "🎉" },
+            { quote: "Your effort matters more than you know. Keep it up!", emoji: "💫" },
+            { quote: "Struggling? That means you're growing. Don't give up!", emoji: "🌱" },
+            { quote: "You're not alone in this journey. We're here to help!", emoji: "🤝" },
+            { quote: "Today's study session is tomorrow's confidence!", emoji: "🔥" },
+            { quote: "Be proud of yourself for showing up and trying!", emoji: "⭐" },
+            { quote: "Knowledge is power, and you're getting stronger!", emoji: "💡" },
+            { quote: "One step at a time. You're making great progress!", emoji: "👣" },
+            { quote: "Your brain is amazing! Feed it with curiosity!", emoji: "🧠" },
+            { quote: "Consistency beats intensity. Keep showing up!", emoji: "📚" },
+            { quote: "You're investing in yourself. That's the best investment!", emoji: "💎" }
+        ];
+
+        function refreshQuote() {
+            const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+            const quoteText = document.getElementById('quoteText');
+            const quoteEmoji = document.getElementById('quoteEmoji');
+            const card = document.getElementById('motivationCard');
+
+            // Add fade out animation
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(-10px)';
+
+            setTimeout(() => {
+                quoteText.textContent = randomQuote.quote;
+                quoteEmoji.textContent = randomQuote.emoji;
+
+                // Fade in with new quote
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 300);
+        }
+
+        let globalQuizData = [];
+        let userAnswers = {};
+        let allSegments = [];
+        let currentSegmentIndex = 0;
+        let currentPlannerData = null;
+        let currentSummaryData = null;
+
+        // Set default date to today for manual planner
+        document.addEventListener('DOMContentLoaded', function () {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('manualDate').value = today;
+        });
+
+        // Switch between AI and Manual planner tabs
+        function switchPlanTab(tab) {
+            const tabs = document.querySelectorAll('.plan-tab-btn');
+            const forms = document.querySelectorAll('.plan-form-section');
+
+            tabs.forEach(btn => btn.classList.remove('active'));
+            forms.forEach(form => form.style.display = 'none');
+
+            if (tab === 'ai') {
+                tabs[0].classList.add('active');
+                document.getElementById('planForm').style.display = 'block';
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('manualPlanForm').style.display = 'block';
+            }
+        }
+
+        // Download planner as text file
+        async function downloadPlanner() {
+            if (!currentPlannerData || currentPlannerData.length === 0) {
+                alert('No planner data to download');
+                return;
+            }
+
+            try {
+                const subject = document.getElementById('planSubject').value || 'Study';
+                let text = `STUDY PLANNER: ${subject}\n`;
+                text += '='.repeat(80) + '\n\n';
+
+                // Group by date
+                const byDate = {};
+                currentPlannerData.forEach(item => {
+                    if (!byDate[item.scheduled_date]) {
+                        byDate[item.scheduled_date] = [];
+                    }
+                    byDate[item.scheduled_date].push(item);
+                });
+
+                // Format output
+                Object.keys(byDate).sort().forEach(date => {
+                    const dateObj = new Date(date + 'T00:00:00');
+                    const formatted = dateObj.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    text += `\n${formatted}\n`;
+                    text += '-'.repeat(80) + '\n';
+
+                    byDate[date].forEach(item => {
+                        text += `\n${item.start_time} - ${item.end_time}: ${item.topic_name}\n`;
+                        if (item.unit_name) text += `  Unit: ${item.unit_name}\n`;
+                        text += `  Difficulty: ${item.difficulty.toUpperCase()}\n`;
+                        text += `  Estimated Time: ${item.estimated_hours} hours\n`;
+                    });
+                });
+
+                text += '\n' + '='.repeat(80) + '\n';
+                text += `Total Topics: ${currentPlannerData.length}\n`;
+                text += `Total Hours: ${currentPlannerData.reduce((sum, item) => sum + item.estimated_hours, 0)}\n`;
+                text += `Generated: ${new Date().toLocaleString()}\n`;
+
+                // Create download
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `study_planner_${subject.replace(/\s+/g, '_')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('Error downloading planner');
+            }
+        }
+
+        // Download summary as text file
+        async function downloadSummary() {
+            if (!currentSummaryData) {
+                alert('No summary data to download');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/download_summary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentSummaryData)
+                });
+
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const topic = currentSummaryData.topic || 'summary';
+                    a.download = `summary_${topic.replace(/\s+/g, '_')}.txt`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    alert('Error downloading summary');
+                }
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('Error downloading summary');
+            }
+        }
+
+        // Planner Form
+        document.getElementById('planForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const output = document.getElementById('planOutput');
+            const downloadBtn = document.getElementById('downloadPlanBtn');
+            document.getElementById('loading').classList.add('active');
+
+            const subject = document.getElementById('planSubject').value;
+            const days = document.getElementById('planDays').value;
+            const syllabus = document.getElementById('planSyllabus').value;
+
+            try {
+                const res = await fetch('/api/generate_schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, total_days: days, syllabus })
+                });
+                const data = await res.json();
+
+                if (data.schedule) {
+                    currentPlannerData = data.schedule;
+                    downloadBtn.style.display = 'block';
+
+                    let html = '';
+                    data.schedule.forEach(item => {
+                        html += `
+                        <div class="schedule-item">
+                            <div class="item-header">
+                                <div class="item-title">${item.topic_name}</div>
+                                <span class="difficulty-badge difficulty-${item.difficulty}">${item.difficulty}</span>
+                            </div>
+                            <div style="color: #4a5568; font-size: 0.9rem; margin-bottom: 0.3rem;">${item.unit_name}</div>
+                            <div class="item-meta">
+                                <span>📅 ${item.scheduled_date}</span>
+                                <span>⏱️ ${item.estimated_hours}h</span>
+                                <span>🕐 ${item.start_time} - ${item.end_time}</span>
+                            </div>
+                        </div>`;
+                    });
+                    output.innerHTML = html;
+                }
+            } catch (err) {
+                output.innerHTML = '<p style="color: #f56565;">Error generating schedule</p>';
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        // Manual Planner Form
+        document.getElementById('manualPlanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            document.getElementById('loading').classList.add('active');
+
+            const formData = {
+                subject: document.getElementById('manualSubject').value,
+                topic_name: document.getElementById('manualTopic').value,
+                unit_name: document.getElementById('manualUnit').value,
+                scheduled_date: document.getElementById('manualDate').value,
+                start_time: document.getElementById('manualStartTime').value,
+                end_time: document.getElementById('manualEndTime').value,
+                difficulty: document.getElementById('manualDifficulty').value,
+                estimated_hours: parseFloat(document.getElementById('manualHours').value),
+                notes: document.getElementById('manualNotes').value
+            };
+
+            try {
+                const res = await fetch('/api/add_schedule_item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('✅ Schedule item added successfully!');
+
+                    // Add to current planner data
+                    if (!currentPlannerData) currentPlannerData = [];
+                    currentPlannerData.push(formData);
+
+                    // Update display
+                    const output = document.getElementById('planOutput');
+                    const downloadBtn = document.getElementById('downloadPlanBtn');
+                    downloadBtn.style.display = 'block';
+
+                    let html = '';
+                    currentPlannerData.sort((a, b) => {
+                        if (a.scheduled_date !== b.scheduled_date) {
+                            return a.scheduled_date.localeCompare(b.scheduled_date);
+                        }
+                        return a.start_time.localeCompare(b.start_time);
+                    });
+
+                    currentPlannerData.forEach(item => {
+                        html += `
+                        <div class="schedule-item">
+                            <div class="item-header">
+                                <div class="item-title">${item.topic_name}</div>
+                                <span class="difficulty-badge difficulty-${item.difficulty}">${item.difficulty}</span>
+                            </div>
+                            <div style="color: #4a5568; font-size: 0.9rem; margin-bottom: 0.3rem;">${item.unit_name || ''}</div>
+                            <div class="item-meta">
+                                <span>📅 ${item.scheduled_date}</span>
+                                <span>⏱️ ${item.estimated_hours}h</span>
+                                <span>🕐 ${item.start_time} - ${item.end_time}</span>
+                            </div>
+                            ${item.notes ? `<div style="color: #718096; font-size: 0.85rem; margin-top: 0.5rem;">📝 ${item.notes}</div>` : ''}
+                        </div>`;
+                    });
+                    output.innerHTML = html;
+
+                    // Reset form
+                    document.getElementById('manualPlanForm').reset();
+                    document.getElementById('manualStartTime').value = '09:00';
+                    document.getElementById('manualEndTime').value = '11:00';
+                    document.getElementById('manualHours').value = '2';
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to add schedule item'));
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Error adding schedule item');
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        // Summary Form
+        document.getElementById('summaryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const output = document.getElementById('summaryOutput');
+            const quizContainer = document.getElementById('quizContainer');
+            const downloadBtn = document.getElementById('downloadSummaryBtn');
+            document.getElementById('loading').classList.add('active');
+
+            // Hide quiz container when generating new summary
+            quizContainer.style.display = 'none';
+
+            const formData = new FormData(e.target);
+            formData.append('quiz_mode', 'enabled');
+
+            try {
+                const res = await fetch('/generate', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.segments) {
+                    // Store all segments globally
+                    allSegments = data.segments;
+
+                    // Store summary data for download
+                    currentSummaryData = {
+                        topic: data.topic,
+                        segments: data.segments,
+                        sources: data.sources
+                    };
+                    downloadBtn.style.display = 'block';
+
+                    // Store quiz_session_id for quiz submission
+                    if (data.quiz_session_id) {
+                        window.quizSessionId = data.quiz_session_id;
+                        console.log('Stored quiz_session_id:', data.quiz_session_id);
+                    }
+
+                    let html = '<div style="margin-bottom: 2rem;">';
+                    html += '<h3 style="color: #2d3748; font-size: 1.3rem; margin-bottom: 1rem;">📚 Topics Covered (Click any topic to expand)</h3>';
+
+                    data.segments.forEach((seg, idx) => {
+                        // Get content preview (first 3 items or 300 chars)
+                        let preview = '';
+                        if (seg.content && Array.isArray(seg.content)) {
+                            const previewItems = seg.content.slice(0, 3);
+                            preview = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                            previewItems.forEach(item => {
+                                if (item && item.trim()) {
+                                    const shortItem = item.length > 150 ? item.substring(0, 150) + '...' : item;
+                                    preview += `<li style="margin-bottom: 0.5rem; padding-left: 1.5rem; position: relative; color: #4a5568;">
+                                        <span style="position: absolute; left: 0; color: #38bdf8; font-weight: bold;">•</span>
+                                        ${shortItem}
+                                    </li>`;
+                                }
+                            });
+                            preview += '</ul>';
+                            if (seg.content.length > 3) {
+                                preview += `<div style="color: #38bdf8; font-size: 0.9rem; margin-top: 0.5rem; font-weight: 600;">+ ${seg.content.length - 3} more points...</div>`;
+                            }
+                        }
+
+                        html += `
+                        <div class="summary-segment" onclick="openSegmentModal(${idx})">
+                            <div class="item-header">
+                                <div class="item-title">${seg.title}</div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    ${seg.quiz && seg.quiz.length > 0 ? `
+                                        <button class="btn-primary" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem;" onclick="event.stopPropagation(); startSegmentQuiz(${idx});">
+                                            📝 Quiz (${seg.quiz.length})
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <div style="line-height: 1.8; margin-top: 1rem;">
+                                ${preview}
+                            </div>
+                        </div>`;
+                    });
+                    html += '</div>';
+                    output.innerHTML = html;
+                }
+            } catch (err) {
+                output.innerHTML = '<p style="color: #f56565;">Error processing</p>';
+                console.error('Summary error:', err);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        });
+
+        // Format content with bullet points
+        function formatContent(contentArray) {
+            if (!contentArray || contentArray.length === 0) return '';
+
+            let html = '<ul style="list-style: none; padding: 0;">';
+            contentArray.forEach(item => {
+                if (item && item.trim()) {
+                    html += `<li style="margin-bottom: 0.8rem; padding-left: 1.5rem; position: relative;">
+                        <span style="position: absolute; left: 0; color: #667eea; font-weight: bold;">•</span>
+                        ${item}
+                    </li>`;
+                }
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        // Start quiz for a specific segment
+        window.startSegmentQuiz = function (segmentIndex) {
+            console.log('Starting quiz for segment:', segmentIndex);
+
+            currentSegmentIndex = segmentIndex;
+            const segment = allSegments[segmentIndex];
+
+            if (!segment || !segment.quiz || segment.quiz.length === 0) {
+                alert("No quiz available for this topic!");
+                return;
+            }
+
+            globalQuizData = segment.quiz;
+            userAnswers = {};
+
+            // Show quiz container
+            const quizContainer = document.getElementById('quizContainer');
+            const quizContent = document.getElementById('quizContent');
+
+            // Display quiz
+            let html = `
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.3rem;">📝 Quiz: ${segment.title}</h3>
+                    <p style="opacity: 0.9;">${globalQuizData.length} questions • Answer all to see your score</p>
+                </div>
+            `;
+
+            globalQuizData.forEach((q, idx) => {
+                html += `
+                <div class="quiz-question">
+                    <div class="question-number">Question ${idx + 1}</div>
+                    <div class="question-text">${q.question}</div>
+                    ${q.options.map((opt) => `
+                        <div class="option" data-question="${idx}" onclick="selectOption(${idx}, \`${opt.replace(/`/g, '\\`')}\`)">
+                            ${opt}
+                        </div>
+                    `).join('')}
+                </div>`;
+            });
+            html += '<button class="btn-primary" onclick="submitQuiz()" style="margin-top: 1rem;">Submit Quiz</button>';
+            html += '<button class="btn-primary" onclick="closeQuiz()" style="margin-top: 1rem; margin-left: 1rem; background: #cbd5e0; color: #2d3748;">Cancel</button>';
+
+            quizContent.innerHTML = html;
+            quizContainer.style.display = 'block';
+
+            // Scroll to quiz
+            quizContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        // Close quiz
+        window.closeQuiz = function () {
+            document.getElementById('quizContainer').style.display = 'none';
+            userAnswers = {};
+        };
+
+        // Quiz
+        function startQuiz() {
+            alert("Please generate a summary first, then click 'Take Quiz' on any topic!");
+        }
+
+        function selectOption(qIdx, answer) {
+            userAnswers[qIdx] = answer;
+            // Remove selected class from all options for this question
+            document.querySelectorAll(`[data-question="${qIdx}"]`).forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            // Add selected class to clicked option
+            event.target.classList.add('selected');
+        }
+
+        async function submitQuiz() {
+            const answeredCount = Object.keys(userAnswers).length;
+            const totalQuestions = globalQuizData.length;
+
+            console.log('Submit Quiz Debug:');
+            console.log('  Answered:', answeredCount);
+            console.log('  Total:', totalQuestions);
+            console.log('  User Answers:', userAnswers);
+            console.log('  Segment Index:', currentSegmentIndex);
+
+            if (answeredCount < totalQuestions) {
+                alert(`Please answer all questions! (${answeredCount}/${totalQuestions} answered)`);
+                return;
+            }
+
+            document.getElementById('loading').classList.add('active');
+
+            try {
+                const payload = {
+                    segment_index: currentSegmentIndex,
+                    answers: userAnswers,
+                    study_duration: 0,
+                    quiz_session_id: window.quizSessionId  // Add quiz_session_id
+                };
+
+                console.log('Sending payload:', payload);
+
+                const res = await fetch('/submit_quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                console.log('Response:', data);
+
+                if (data.success) {
+                    showResults(data);
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to submit quiz'));
+                }
+            } catch (err) {
+                console.error('Quiz submission error:', err);
+                alert('Error submitting quiz: ' + err.message);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function showResults(data) {
+            const container = document.getElementById('quizContent');
+
+            console.log('Quiz Results:', data); // Debug log
+
+            let html = `
+            <div class="result-summary">
+                <div class="result-score">${data.score}/${data.total}</div>
+                <div class="result-text">${data.percentage}% Correct</div>
+                <div style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.9;">
+                    Questions Answered: ${data.total} | Correct: ${data.score} | Wrong: ${data.total - data.score}
+                </div>
+            </div>`;
+
+            // Use detailed_results from backend if available
+            if (data.detailed_results && data.detailed_results.length > 0) {
+                data.detailed_results.forEach((result, idx) => {
+                    html += `
+                    <div class="quiz-question">
+                        <div class="question-number">Question ${idx + 1}</div>
+                        <div class="question-text">${result.question}</div>
+                        ${result.options.map(opt => {
+                        let classes = 'option';
+                        if (opt === result.user_answer && result.is_correct) classes += ' correct';
+                        else if (opt === result.user_answer && !result.is_correct) classes += ' wrong';
+                        else if (opt === result.correct_answer) classes += ' correct';
+
+                        return `<div class="${classes}">${opt}</div>`;
+                    }).join('')}
+                        ${!result.is_correct ? `<div class="correct-answer">✓ Correct Answer: ${result.correct_answer}</div>` : ''}
+                    </div>`;
+                });
+            } else {
+                // Fallback to old method
+                globalQuizData.forEach((q, idx) => {
+                    const userAnswer = userAnswers[idx];
+                    const correct = userAnswer === q.answer;
+
+                    html += `
+                    <div class="quiz-question">
+                        <div class="question-number">Question ${idx + 1}</div>
+                        <div class="question-text">${q.question}</div>
+                        ${q.options.map(opt => {
+                        let classes = 'option';
+                        if (opt === userAnswer && correct) classes += ' correct';
+                        else if (opt === userAnswer && !correct) classes += ' wrong';
+                        else if (opt === q.answer) classes += ' correct';
+
+                        return `<div class="${classes}">${opt}</div>`;
+                    }).join('')}
+                        ${!correct ? `<div class="correct-answer">✓ Correct Answer: ${q.answer}</div>` : ''}
+                    </div>`;
+                });
+            }
+
+            html += '<button class="btn-primary" onclick="startSegmentQuiz(' + currentSegmentIndex + ')">Retake Quiz</button>';
+            html += '<button class="btn-primary" onclick="closeQuiz()" style="margin-left: 1rem; background: #48bb78;">Back to Summary</button>';
+            container.innerHTML = html;
+        }
+
+        // Modal functions for summary segments
+        let currentModalSegmentIndex = 0;
+
+        function openSegmentModal(index) {
+            if (!allSegments || allSegments.length === 0) return;
+
+            currentModalSegmentIndex = index;
+            const segment = allSegments[index];
+
+            // Build complete modal content with proper organization
+            let modalContent = '';
+
+            // Add main content
+            if (segment.content && Array.isArray(segment.content) && segment.content.length > 0) {
+                modalContent += '<div style="margin-bottom: 2rem;">';
+                modalContent += '<h3 style="color: var(--primary); font-size: 1.3rem; margin-bottom: 1rem; font-family: \'Caveat\', cursive;">📖 Content</h3>';
+                modalContent += '<ul style="list-style: none; padding: 0;">';
+                segment.content.forEach(item => {
+                    if (item && item.trim()) {
+                        modalContent += `<li style="margin-bottom: 1rem; padding-left: 2rem; position: relative; line-height: 1.8; font-size: 1.1rem;">
+                            <span style="position: absolute; left: 0; color: var(--primary); font-weight: bold; font-size: 1.3rem;">✓</span>
+                            ${item}
+                        </li>`;
+                    }
+                });
+                modalContent += '</ul>';
+                modalContent += '</div>';
+            }
+
+            // Add key points if available
+            if (segment.key_points && Array.isArray(segment.key_points) && segment.key_points.length > 0) {
+                modalContent += '<div style="background: rgba(56, 189, 248, 0.1); padding: 1.5rem; border-radius: 10px; border-left: 4px solid var(--primary);">';
+                modalContent += '<h3 style="color: var(--primary); font-size: 1.3rem; margin-bottom: 1rem; font-family: \'Caveat\', cursive;">🔑 Key Points</h3>';
+                modalContent += '<ul style="list-style: none; padding: 0;">';
+                segment.key_points.forEach(point => {
+                    if (point && point.trim()) {
+                        modalContent += `<li style="margin-bottom: 0.8rem; padding-left: 2rem; position: relative; line-height: 1.6; font-size: 1.05rem;">
+                            <span style="position: absolute; left: 0; color: var(--primary); font-weight: bold; font-size: 1.2rem;">★</span>
+                            ${point}
+                        </li>`;
+                    }
+                });
+                modalContent += '</ul>';
+                modalContent += '</div>';
+            }
+
+            // Add quiz info if available
+            if (segment.quiz && segment.quiz.length > 0) {
+                modalContent += `<div style="margin-top: 2rem; padding: 1rem; background: rgba(72, 187, 120, 0.1); border-radius: 10px; text-align: center;">
+                    <p style="color: #48bb78; font-weight: 600; margin-bottom: 0.5rem;">📝 Ready to test your knowledge?</p>
+                    <button class="btn-primary" onclick="closeModal(); setTimeout(() => startSegmentQuiz(${index}), 300);" style="width: auto; padding: 0.7rem 1.5rem; background: #48bb78;">
+                        Take Quiz (${segment.quiz.length} questions)
+                    </button>
+                </div>`;
+            }
+
+            // Update modal
+            document.getElementById('modalTitle').innerHTML = `${segment.title}`;
+            document.getElementById('modalCounter').textContent = `${index + 1} / ${allSegments.length}`;
+            document.getElementById('modalBody').innerHTML = modalContent;
+
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (index > 0) {
+                prevBtn.style.display = 'inline-block';
+                prevBtn.innerHTML = `← ${allSegments[index - 1].title.substring(0, 30)}${allSegments[index - 1].title.length > 30 ? '...' : ''}`;
+            } else {
+                prevBtn.style.display = 'none';
+            }
+
+            if (index < allSegments.length - 1) {
+                nextBtn.style.display = 'inline-block';
+                nextBtn.innerHTML = `${allSegments[index + 1].title.substring(0, 30)}${allSegments[index + 1].title.length > 30 ? '...' : ''} →`;
+            } else {
+                nextBtn.style.display = 'none';
+            }
+
+            // Show modal
+            document.getElementById('summaryModal').classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) {
+                return;
+            }
+            document.getElementById('summaryModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function nextSegment() {
+            if (currentModalSegmentIndex < allSegments.length - 1) {
+                openSegmentModal(currentModalSegmentIndex + 1);
+            }
+        }
+
+        function previousSegment() {
+            if (currentModalSegmentIndex > 0) {
+                openSegmentModal(currentModalSegmentIndex - 1);
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Arrow key navigation in modal
+        document.addEventListener('keydown', function (e) {
+            const modal = document.getElementById('summaryModal');
+            if (modal.classList.contains('active')) {
+                if (e.key === 'ArrowRight') {
+                    nextSegment();
+                } else if (e.key === 'ArrowLeft') {
+                    previousSegment();
+                }
+            }
+        });
+    </script>
+
+    <!-- Modal for Summary Segment -->
+    <div class="modal-overlay" id="summaryModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Topic Title</h2>
+                <div class="modal-counter" id="modalCounter">1 / 1</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="previousSegment()" id="prevBtn"
+                    style="width: auto; padding: 0.6rem 1.2rem; display: none;">
+                    ← Previous
+                </button>
+                <button class="btn-primary" onclick="nextSegment()" id="nextBtn"
+                    style="width: auto; padding: 0.6rem 1.2rem; display: none;">
+                    Next →
+                </button>
+                <button class="btn-primary" onclick="closeModal()"
+                    style="width: auto; padding: 0.6rem 1.2rem; background: #48bb78;">
+                    ✓ Done
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
