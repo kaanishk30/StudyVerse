@@ -1,0 +1,11 @@
+Flask
+numpy
+pandas
+scikit-learn
+requests
+beautifulsoup4
+wikipedia-api
+nltk
+werkzeug
+PyPDF2
+python-pptx

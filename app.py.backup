@@ -1,0 +1,788 @@
+from flask import Flask, render_template, request, jsonify, session
+import numpy as np
+import joblib
+import wikipediaapi
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.corpus import stopwords
+import re
+import os
+from werkzeug.utils import secure_filename
+import PyPDF2
+from pptx import Presentation
+import random
+from datetime import datetime, timedelta
+import json
+
+app = Flask(__name__)
+app.secret_key = 'change-this-secret-key-in-production-xyz123'
+
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'pdf', 'ppt', 'pptx', 'txt'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs('models', exist_ok=True)
+
+USER_DATA_FILE = 'user_data.json'
+
+# ==========================================
+# NLTK SETUP
+# ==========================================
+print("📦 Setting up NLTK...")
+required_nltk = ['punkt', 'punkt_tab', 'stopwords', 'averaged_perceptron_tagger', 'averaged_perceptron_tagger_eng']
+for dataset in required_nltk:
+    try:
+        nltk.download(dataset, quiet=True)
+    except:
+        pass
+print("✓ NLTK ready")
+
+# ==========================================
+# WIKIPEDIA SETUP
+# ==========================================
+wiki = wikipediaapi.Wikipedia(
+    language='en',
+    extract_format=wikipediaapi.ExtractFormat.WIKI,
+    user_agent="AI_Study_Pal_v3/1.0 (Educational Purpose)"
+)
+
+# ==========================================
+# LOAD ML MODELS
+# ==========================================
+try:
+    quiz_vectorizer = joblib.load('models/vectorizer.pkl')
+    quiz_model = joblib.load('models/quiz_model.pkl')
+    summary_model = joblib.load('models/summary_model.pkl')
+    summary_tfidf = joblib.load('models/tfidf_summary.pkl')
+    print("✓ ML models loaded")
+except Exception as e:
+    print(f"⚠️ ML models not loaded: {e}")
+    quiz_vectorizer = quiz_model = summary_model = summary_tfidf = None
+
+# ==========================================
+# FILE PROCESSING
+# ==========================================
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def extract_text_from_pdf(filepath):
+    """Extract text from PDF"""
+    text = ""
+    try:
+        with open(filepath, 'rb') as f:
+            reader = PyPDF2.PdfReader(f)
+            for page in reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text += extracted + "\n"
+    except Exception as e:
+        print(f"PDF error: {e}")
+    return text
+
+def extract_text_from_ppt(filepath):
+    """Extract text from PowerPoint"""
+    text = ""
+    try:
+        prs = Presentation(filepath)
+        for slide in prs.slides:
+            for shape in slide.shapes:
+                if hasattr(shape, "text") and shape.text:
+                    text += shape.text + "\n"
+    except Exception as e:
+        print(f"PPT error: {e}")
+    return text
+
+def extract_text_from_txt(filepath):
+    """Extract text from TXT file"""
+    try:
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            return f.read()
+    except Exception as e:
+        print(f"TXT error: {e}")
+        return ""
+
+# ==========================================
+# USER DATA MANAGEMENT
+# ==========================================
+def load_user_data():
+    if os.path.exists(USER_DATA_FILE):
+        try:
+            with open(USER_DATA_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_user_data(data):
+    with open(USER_DATA_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+def initialize_user(user_id):
+    data = load_user_data()
+    if user_id not in data:
+        data[user_id] = {
+            'streak': 0,
+            'last_activity': '',
+            'total_quizzes': 0,
+            'correct_answers': 0,
+            'achievements': [],
+            'study_history': []
+        }
+        save_user_data(data)
+    return data[user_id]
+
+def update_streak(user_id):
+    data = load_user_data()
+    user = data.get(user_id, {})
+    today = datetime.now().date().isoformat()
+    last_activity = user.get('last_activity', '')
+    
+    if last_activity:
+        last_date = datetime.fromisoformat(last_activity).date()
+        days_diff = (datetime.now().date() - last_date).days
+        if days_diff == 1:
+            user['streak'] = user.get('streak', 0) + 1
+        elif days_diff > 1:
+            user['streak'] = 1
+    else:
+        user['streak'] = 1
+    
+    user['last_activity'] = today
+    data[user_id] = user
+    save_user_data(data)
+    return user['streak']
+
+# ==========================================
+# TEXT CLEANING & PROCESSING
+# ==========================================
+def clean_text(text):
+    """Remove Wikipedia artifacts and metadata"""
+    if not text:
+        return ""
+    
+    # Remove headers
+    text = re.sub(r'={2,}.*?={2,}', '', text)
+    
+    # Remove metadata patterns
+    patterns = [
+        r'\(.*?ISO.*?\)',
+        r'\(.*?MARC.*?\)',
+        r'\(.*?code.*?\)',
+        r'\[.*?\]',
+        r'See also:.*?(?=\n|$)',
+        r'References:.*?(?=\n|$)',
+        r'External links:.*?(?=\n|$)',
+        r'Further reading:.*?(?=\n|$)',
+    ]
+    
+    for pattern in patterns:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+    
+    # Clean whitespace
+    text = re.sub(r'\n\s*\n+', '\n\n', text)
+    text = re.sub(r' {2,}', ' ', text)
+    text = text.strip()
+    
+    return text
+
+def extract_complete_sentences(text):
+    """Extract only complete, meaningful sentences"""
+    if not text:
+        return []
+    
+    sentences = sent_tokenize(text)
+    complete = []
+    
+    skip_starts = ['see also', 'further', 'external', 'references', 'notes', 'sources', 'citations']
+    
+    for sent in sentences:
+        sent = sent.strip()
+        
+        # Quality checks
+        if not sent:
+            continue
+        if not sent[-1] in '.!?':
+            continue
+        if len(sent.split()) < 5 or len(sent.split()) > 60:
+            continue
+        if any(sent.lower().startswith(skip) for skip in skip_starts):
+            continue
+        
+        complete.append(sent)
+    
+    return complete
+
+def extract_relevant_content(text, topic):
+    """Extract sentences relevant to topic"""
+    sentences = extract_complete_sentences(text)
+    if not sentences:
+        return ""
+    
+    topic_words = set(topic.lower().split())
+    relevant = []
+    
+    for sent in sentences:
+        sent_words = set(sent.lower().split())
+        # Check if sentence is relevant
+        overlap = topic_words & sent_words
+        if overlap or any(word in sent.lower() for word in topic.split()):
+            relevant.append(sent)
+    
+    # If too few, take first meaningful paragraphs
+    if len(relevant) < 5:
+        relevant = sentences[:20]
+    
+    return ' '.join(relevant[:30])
+
+# ==========================================
+# SMART TOPIC SEGMENTATION
+# ==========================================
+def segment_into_topics(text, main_topic):
+    """Divide content into logical subtopics"""
+    sentences = extract_complete_sentences(text)
+    
+    if len(sentences) < 3:
+        return [{
+            'title': main_topic,
+            'content': sentences,
+            'key_points': sentences
+        }]
+    
+    segments = []
+    current_batch = []
+    segment_num = 1
+    
+    for i, sent in enumerate(sentences):
+        current_batch.append(sent)
+        
+        # Create segment every 6-8 sentences or at end
+        if len(current_batch) >= 6 and (i == len(sentences) - 1 or len(current_batch) >= 8):
+            title = extract_segment_title(current_batch, main_topic, segment_num)
+            key_points = extract_key_points(current_batch)
+            
+            segments.append({
+                'title': title,
+                'content': current_batch[:],
+                'key_points': key_points
+            })
+            
+            current_batch = []
+            segment_num += 1
+    
+    # Add remaining
+    if current_batch:
+        title = extract_segment_title(current_batch, main_topic, segment_num)
+        key_points = extract_key_points(current_batch)
+        segments.append({
+            'title': title,
+            'content': current_batch,
+            'key_points': key_points
+        })
+    
+    return segments if segments else [{
+        'title': main_topic,
+        'content': sentences[:10],
+        'key_points': sentences[:5]
+    }]
+
+def extract_segment_title(sentences, main_topic, index):
+    """Extract meaningful title from content"""
+    if not sentences:
+        return f"{main_topic} - Part {index}"
+    
+    first_sent = sentences[0]
+    words = word_tokenize(first_sent)
+    
+    try:
+        tags = nltk.pos_tag(words)
+        # Find important nouns
+        nouns = [word for word, tag in tags if tag.startswith('NN') and len(word) > 4 and word.isalpha()]
+        if nouns:
+            return nouns[0].title()
+    except:
+        pass
+    
+    # Fallback
+    if len(words) > 2:
+        return ' '.join(words[:3]).title()
+    
+    return f"{main_topic} - Part {index}"
+
+def extract_key_points(sentences):
+    """Score and extract most important sentences"""
+    if len(sentences) <= 3:
+        return sentences
+    
+    scored = []
+    
+    for sent in sentences:
+        score = 0
+        lower = sent.lower()
+        
+        # Importance indicators
+        if any(w in lower for w in ['is', 'are', 'defined', 'refers', 'means', 'called']):
+            score += 2
+        if any(w in lower for w in ['important', 'key', 'main', 'primary', 'essential', 'significant']):
+            score += 3
+        if sent[0].isupper() and not sent.startswith(('The', 'A', 'An', 'In', 'On')):
+            score += 1
+        if len(sent.split()) > 10 and len(sent.split()) < 30:
+            score += 1
+        
+        scored.append((score, sent))
+    
+    scored.sort(reverse=True, key=lambda x: x[0])
+    return [sent for _, sent in scored[:min(5, len(sentences))]]
+
+# ==========================================
+# RAG: SEARCH & LEARN
+# ==========================================
+def search_and_learn(query):
+    """Enhanced RAG with Wikipedia"""
+    # Handle comparison queries
+    comparison_patterns = [
+        r'(?:difference between|compare|vs|versus)\s+(.*?)\s+(?:and|vs|versus)\s+(.*?)(?:\?|$)',
+        r'(.*?)\s+(?:vs|versus)\s+(.*?)(?:\?|$)'
+    ]
+    
+    topics = []
+    is_comparison = False
+    
+    for pattern in comparison_patterns:
+        match = re.search(pattern, query.lower(), re.IGNORECASE)
+        if match:
+            topics = [match.group(1).strip(), match.group(2).strip()]
+            is_comparison = True
+            break
+    
+    if not topics:
+        topics = [query]
+    
+    all_segments = []
+    sources = []
+    
+    for topic in topics:
+        # Try multiple search variations
+        variants = [topic, topic.title(), topic.capitalize()]
+        found = False
+        
+        for variant in variants:
+            try:
+                page = wiki.page(variant)
+                if page.exists():
+                    raw = page.text if hasattr(page, 'text') else page.summary
+                    cleaned = clean_text(raw)
+                    relevant = extract_relevant_content(cleaned, topic)
+                    
+                    if relevant:
+                        segments = segment_into_topics(relevant, topic.title())
+                        
+                        # Label for comparisons
+                        if is_comparison:
+                            for seg in segments:
+                                seg['comparison_topic'] = topic.title()
+                        
+                        all_segments.extend(segments)
+                        sources.append(f"Wikipedia: {page.title}")
+                        found = True
+                        break
+            except Exception as e:
+                print(f"Search error for {variant}: {e}")
+                continue
+        
+        if not found:
+            print(f"Could not find: {topic}")
+    
+    return all_segments, sources
+
+# ==========================================
+# QUIZ GENERATION
+# ==========================================
+def generate_quiz_for_segment(segment):
+    """Generate high-quality quiz questions"""
+    content = ' '.join(segment['content'])
+    sentences = segment['content']
+    
+    if not sentences:
+        return []
+    
+    questions = []
+    used_sentences = set()
+    
+    # Generate 3-4 questions per segment
+    attempts = 0
+    max_attempts = len(sentences) * 2
+    
+    while len(questions) < min(4, len(sentences)) and attempts < max_attempts:
+        attempts += 1
+        
+        # Get unused sentence
+        available = [s for i, s in enumerate(sentences) if i not in used_sentences]
+        if not available:
+            break
+        
+        sent = random.choice(available)
+        sent_idx = sentences.index(sent)
+        used_sentences.add(sent_idx)
+        
+        # Alternate question types
+        q_type = len(questions) % 3
+        
+        if q_type == 0:
+            q = generate_fill_blank(sent, content)
+        elif q_type == 1:
+            q = generate_concept_question(sent, segment['title'])
+        else:
+            q = generate_true_false(sent)
+        
+        if q and q not in questions:
+            questions.append(q)
+    
+    return questions
+
+def generate_fill_blank(sentence, context):
+    """Fill-in-the-blank with contextual options"""
+    words = word_tokenize(sentence)
+    
+    try:
+        tags = nltk.pos_tag(words)
+    except:
+        return None
+    
+    # Find good candidates to blank
+    candidates = []
+    for i, (word, tag) in enumerate(tags):
+        if tag.startswith('NN') and len(word) > 4 and word.isalpha():
+            candidates.append((i, word))
+    
+    if not candidates:
+        return None
+    
+    idx, answer = random.choice(candidates)
+    
+    # Create question
+    q_words = words[:]
+    q_words[idx] = '_______'
+    question = ' '.join(q_words)
+    
+    # Generate smart distractors
+    distractors = get_contextual_distractors(answer, context, tags)
+    
+    if len(distractors) < 3:
+        return None
+    
+    options = [answer] + distractors[:3]
+    random.shuffle(options)
+    
+    return {
+        'question': question,
+        'options': options,
+        'answer': answer,
+        'type': 'Fill in the Blank'
+    }
+
+def get_contextual_distractors(answer, context, pos_tags):
+    """Generate plausible wrong answers from context"""
+    context_words = word_tokenize(context.lower())
+    
+    try:
+        context_tags = nltk.pos_tag(context_words)
+    except:
+        context_tags = []
+    
+    # Find similar words
+    same_type = []
+    answer_lower = answer.lower()
+    
+    for word, tag in context_tags:
+        if (tag.startswith('NN') and 
+            len(word) > 4 and 
+            word != answer_lower and
+            word.isalpha() and
+            word not in ['example', 'instance', 'concept', 'thing', 'part']):
+            same_type.append(word.title())
+    
+    distractors = list(set(same_type))[:5]
+    
+    # Add generic if needed
+    generic = ['Process', 'System', 'Method', 'Structure', 'Component', 'Element']
+    for g in generic:
+        if len(distractors) < 3 and g != answer and g not in distractors:
+            distractors.append(g)
+    
+    return distractors[:5]
+
+def generate_concept_question(sentence, topic):
+    """What is X? style questions"""
+    words = word_tokenize(sentence)
+    
+    try:
+        tags = nltk.pos_tag(words)
+    except:
+        return None
+    
+    # Find key concept
+    concept = None
+    for word, tag in tags:
+        if (tag == 'NNP' or tag.startswith('NN')) and len(word) > 5 and word.isalpha():
+            concept = word
+            break
+    
+    if not concept:
+        return None
+    
+    # Try to extract definition
+    parts = sentence.split(concept, 1)
+    if len(parts) > 1 and len(parts[1].strip()) > 15:
+        correct = parts[1].strip()[:100]
+        
+        # Generate options
+        options = [
+            correct,
+            "A type of mathematical formula used in calculations",
+            "A biological process found in living organisms",
+            "A historical event that occurred in the past"
+        ]
+        random.shuffle(options)
+        
+        return {
+            'question': f"What is '{concept}' in the context of {topic}?",
+            'options': options,
+            'answer': correct,
+            'type': 'Conceptual'
+        }
+    
+    return None
+
+def generate_true_false(sentence):
+    """True/False by fact modification"""
+    # 70% true, 30% false
+    make_false = random.random() < 0.3
+    
+    answer = "True"
+    modified_sent = sentence
+    
+    if make_false:
+        words = word_tokenize(sentence)
+        try:
+            tags = nltk.pos_tag(words)
+            
+            # Replace a key noun
+            for i, (word, tag) in enumerate(tags):
+                if tag.startswith('NN') and len(word) > 4 and word.isalpha():
+                    words[i] = "something_different"
+                    modified_sent = ' '.join(words)
+                    modified_sent = modified_sent.replace('something_different', 'an unrelated concept')
+                    answer = "False"
+                    break
+        except:
+            pass
+    
+    return {
+        'question': f"True or False: {modified_sent}",
+        'options': ['True', 'False'],
+        'answer': answer,
+        'type': 'True or False'
+    }
+
+# ==========================================
+# TOPIC SUGGESTIONS
+# ==========================================
+def suggest_related_topics(main_topic):
+    """Suggest related topics to explore"""
+    suggestions_db = {
+        'machine learning': ['Deep Learning', 'Neural Networks', 'Supervised Learning'],
+        'artificial intelligence': ['Machine Learning', 'NLP', 'Computer Vision'],
+        'physics': ['Quantum Mechanics', 'Thermodynamics', 'Relativity'],
+        'biology': ['Genetics', 'Evolution', 'Cell Biology'],
+        'chemistry': ['Organic Chemistry', 'Biochemistry', 'Physical Chemistry'],
+        'history': ['World War II', 'Ancient Rome', 'Renaissance'],
+        'mathematics': ['Calculus', 'Linear Algebra', 'Statistics'],
+        'programming': ['Python', 'Algorithms', 'Data Structures']
+    }
+    
+    lower_topic = main_topic.lower()
+    
+    for key, topics in suggestions_db.items():
+        if key in lower_topic:
+            return random.sample(topics, min(3, len(topics)))
+    
+    return ['Related Concepts', 'Advanced Topics', 'Practical Applications']
+
+# ==========================================
+# FLASK ROUTES
+# ==========================================
+@app.route('/')
+def index():
+    if 'user_id' not in session:
+        session['user_id'] = f"user_{random.randint(1000, 9999)}"
+    
+    user_data = initialize_user(session['user_id'])
+    # CHANGED: Use index_modern.html instead of index_v3.html
+    return render_template('index_modern.html', user=user_data)
+
+@app.route('/generate', methods=['POST'])
+def generate():
+    try:
+        user_id = session.get('user_id')
+        query = request.form.get('query', '').strip()
+        user_notes = request.form.get('user_notes', '').strip()
+        quiz_mode = request.form.get('quiz_mode', 'enabled')
+        files = request.files.getlist('files')
+        
+        if not query:
+            return jsonify({'error': 'Please enter a topic'}), 400
+        
+        # Update streak
+        streak = update_streak(user_id)
+        
+        # Process uploaded files
+        uploaded_content = ""
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                
+                ext = filename.rsplit('.', 1)[1].lower()
+                
+                if ext == 'pdf':
+                    uploaded_content += extract_text_from_pdf(filepath)
+                elif ext in ['ppt', 'pptx']:
+                    uploaded_content += extract_text_from_ppt(filepath)
+                elif ext == 'txt':
+                    uploaded_content += extract_text_from_txt(filepath)
+                
+                # Clean up
+                try:
+                    os.remove(filepath)
+                except:
+                    pass
+        
+        # Determine content source
+        segments = []
+        sources = []
+        
+        if uploaded_content and len(uploaded_content.strip()) > 50:
+            # Use uploaded files
+            cleaned = clean_text(uploaded_content)
+            segments = segment_into_topics(cleaned, query)
+            sources = ['Your uploaded files']
+        elif user_notes and len(user_notes.strip()) > 50:
+            # Use user notes
+            segments = segment_into_topics(user_notes, query)
+            sources = ['Your notes']
+        else:
+            # RAG: Search Wikipedia
+            segments, sources = search_and_learn(query)
+        
+        if not segments:
+            return jsonify({'error': f'Could not find information about "{query}". Try uploading files or rephrasing.'}), 404
+        
+        # Generate quizzes
+        for segment in segments:
+            if quiz_mode == 'enabled':
+                segment['quiz'] = generate_quiz_for_segment(segment)
+            else:
+                segment['quiz'] = []
+        
+        # Get suggestions
+        suggestions = suggest_related_topics(query)
+        
+        # Store in session
+        session['current_study'] = {
+            'segments': segments,
+            'topic': query,
+            'quiz_mode': quiz_mode,
+            'sources': sources
+        }
+        
+        return jsonify({
+            'success': True,
+            'topic': query,
+            'segments': segments,
+            'sources': sources,
+            'quiz_mode': quiz_mode,
+            'suggestions': suggestions,
+            'streak': streak
+        })
+        
+    except Exception as e:
+        print(f"Error in generate: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/submit_quiz', methods=['POST'])
+def submit_quiz():
+    try:
+        user_id = session.get('user_id')
+        data = request.get_json()
+        segment_idx = data.get('segment_index')
+        answers = data.get('answers', {})
+        
+        study_data = session.get('current_study', {})
+        segments = study_data.get('segments', [])
+        
+        if segment_idx >= len(segments):
+            return jsonify({'error': 'Invalid segment'}), 400
+        
+        questions = segments[segment_idx].get('quiz', [])
+        if not questions:
+            return jsonify({'score': 0, 'total': 0, 'percentage': 100})
+        
+        score = 0
+        for i, q in enumerate(questions):
+            user_ans = answers.get(str(i))
+            if user_ans == q['answer']:
+                score += 1
+        
+        # Update user stats
+        user_data = load_user_data()
+        user = user_data.get(user_id, {})
+        user['total_quizzes'] = user.get('total_quizzes', 0) + 1
+        user['correct_answers'] = user.get('correct_answers', 0) + score
+        user_data[user_id] = user
+        save_user_data(user_data)
+        
+        percentage = round((score / len(questions)) * 100, 1) if questions else 0
+        
+        return jsonify({
+            'success': True,
+            'score': score,
+            'total': len(questions),
+            'percentage': percentage
+        })
+        
+    except Exception as e:
+        print(f"Error in submit_quiz: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/profile')
+def profile():
+    user_id = session.get('user_id')
+    user_data = load_user_data().get(user_id, {})
+    
+    achievements = [
+        {'id': '3day', 'name': '🔥 3-Day Streak', 'desc': 'Study 3 days', 'unlocked': user_data.get('streak', 0) >= 3},
+        {'id': '7day', 'name': '⭐ Week Warrior', 'desc': 'Study 7 days', 'unlocked': user_data.get('streak', 0) >= 7},
+        {'id': 'quiz10', 'name': '📝 Quiz Master', 'desc': 'Complete 10 quizzes', 'unlocked': user_data.get('total_quizzes', 0) >= 10}
+    ]
+    
+    calendar = []
+    for i in range(30):
+        date = (datetime.now() - timedelta(days=29-i)).date()
+        calendar.append({'date': date.isoformat(), 'has_activity': False})
+    
+    return render_template('profile.html', user=user_data, achievements=achievements, calendar=calendar)
+
+if __name__ == '__main__':
+    print("\n" + "="*50)
+    print("🎓 AI Study Pal v3.0 - Progressive Learning System")
+    print("="*50)
+    print("📍 Open: http://127.0.0.1:5000")
+    print("✨ Features: Smart Segmentation | Quiz Mode Toggle | File Upload")
+    print("="*50 + "\n")
+    app.run(debug=True, host='0.0.0.0', port=5000)

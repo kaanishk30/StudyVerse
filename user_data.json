@@ -1,0 +1,114 @@
+{
+  "user_6402": {
+    "streak": 0,
+    "last_activity": "",
+    "total_quizzes": 0,
+    "correct_answers": 0,
+    "achievements": [],
+    "study_history": []
+  },
+  "user_9922": {
+    "streak": 0,
+    "last_activity": "",
+    "total_quizzes": 0,
+    "correct_answers": 0,
+    "achievements": [],
+    "study_history": []
+  },
+  "user_6629": {
+    "streak": 1,
+    "last_activity": "2025-12-27",
+    "total_quizzes": 4,
+    "correct_answers": 8,
+    "achievements": [
+      "high_achiever"
+    ],
+    "study_history": [
+      {
+        "date": "2025-12-27T11:37:13.441639",
+        "topic": "Machine Learning vs Deep Learning",
+        "score": "2/3",
+        "difficulty": "easy"
+      },
+      {
+        "date": "2025-12-27T11:37:58.630981",
+        "topic": "human vs ai",
+        "score": "1/3",
+        "difficulty": "easy"
+      },
+      {
+        "date": "2025-12-27T12:04:00.065056",
+        "topic": "Machine Learning vs Deep Learning",
+        "score": "1/5",
+        "difficulty": "easy"
+      },
+      {
+        "date": "2025-12-27T12:06:06.451176",
+        "topic": "junkins",
+        "score": "4/5",
+        "difficulty": "easy"
+      }
+    ]
+  },
+  "user_7542": {
+    "streak": 1,
+    "last_activity": "2025-12-27",
+    "total_quizzes": 3,
+    "correct_answers": 2,
+    "achievements": [
+      "high_achiever"
+    ],
+    "study_history": [
+      {
+        "date": "2025-12-27T12:08:55.622045",
+        "topic": "Machine Learning",
+        "score": "1/2",
+        "difficulty": "easy"
+      },
+      {
+        "date": "2025-12-27T12:09:24.974540",
+        "topic": "Machine Learning",
+        "score": "0/5",
+        "difficulty": "easy"
+      },
+      {
+        "date": "2025-12-27T12:26:17.126988",
+        "topic": "Machine Learning",
+        "score": "1/2",
+        "difficulty": "easy"
+      }
+    ]
+  },
+  "user_7643": {
+    "streak": 1,
+    "last_activity": "2025-12-27",
+    "total_quizzes": 0,
+    "correct_answers": 0,
+    "achievements": [],
+    "study_history": []
+  },
+  "user_9819": {
+    "streak": 1,
+    "last_activity": "2025-12-27",
+    "total_quizzes": 0,
+    "correct_answers": 0,
+    "achievements": [],
+    "study_history": []
+  },
+  "user_6888": {
+    "streak": 0,
+    "last_activity": "",
+    "total_quizzes": 0,
+    "correct_answers": 0,
+    "achievements": [],
+    "study_history": []
+  },
+  "user_8749": {
+    "streak": 1,
+    "last_activity": "2025-12-27",
+    "total_quizzes": 0,
+    "correct_answers": 0,
+    "achievements": [],
+    "study_history": []
+  }
+}

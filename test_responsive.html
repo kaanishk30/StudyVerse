@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyVerse - Responsive Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* Fluid Typography */
+        @media (min-width: 320px) {
+            html {
+                font-size: calc(16px + 2 * ((100vw - 320px) / 1600));
+            }
+        }
+
+        @media (min-width: 1920px) {
+            html {
+                font-size: 18px;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            color: white;
+            overflow-x: hidden;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: min(1200px, 95vw);
+            margin: 0 auto;
+            padding: clamp(1rem, 3vw, 2rem);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            margin-bottom: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .info-value {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-label {
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            opacity: 0.9;
+        }
+
+        .test-section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: clamp(1rem, 3vw, 2rem);
+            border-radius: 15px;
+            margin: 1rem 0;
+        }
+
+        .test-section h2 {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            margin-bottom: 1rem;
+        }
+
+        .test-section p {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .button {
+            background: white;
+            color: #667eea;
+            padding: clamp(0.8rem, 2vw, 1.2rem) clamp(1.5rem, 4vw, 2.5rem);
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎓 StudyVerse Responsive Test</h1>
+        <p style="font-size: clamp(0.9rem, 2vw, 1.2rem); margin-bottom: 2rem;">
+            Resize your browser window to see the app adapt automatically!
+        </p>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-value" id="screenWidth">-</div>
+                <div class="info-label">Screen Width</div>
+            </div>
+            <div class="info-card">
+                <div class="info-value" id="screenHeight">-</div>
+                <div class="info-label">Screen Height</div>
+            </div>
+            <div class="info-card">
+                <div class="info-value" id="fontSize">-</div>
+                <div class="info-label">Font Size</div>
+            </div>
+            <div class="info-card">
+                <div class="info-value" id="deviceType">-</div>
+                <div class="info-label">Device Type</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>✅ Responsive Features Active</h2>
+            <p>✓ Fluid typography - text scales with screen size</p>
+            <p>✓ Flexible containers - adapts to available space</p>
+            <p>✓ Dynamic spacing - padding adjusts automatically</p>
+            <p>✓ Responsive grids - columns collapse on mobile</p>
+            <p>✓ No horizontal scroll - content stays within viewport</p>
+            <p>✓ Touch-friendly - proper button sizes on mobile</p>
+        </div>
+
+        <div class="test-section">
+            <h2>📱 Device Breakpoints</h2>
+            <p><strong>Mobile:</strong> 320px - 767px (1 column layout)</p>
+            <p><strong>Tablet:</strong> 768px - 1024px (2 column layout)</p>
+            <p><strong>Desktop:</strong> 1025px+ (multi-column layout)</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="button" onclick="alert('Button works on all devices!')">
+                Test Button
+            </button>
+            <button class="button" onclick="location.href='/'">
+                Go to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function updateInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const fontSize = window.getComputedStyle(document.documentElement).fontSize;
+
+            let deviceType = 'Desktop';
+            if (width < 768) deviceType = 'Mobile';
+            else if (width < 1025) deviceType = 'Tablet';
+
+            document.getElementById('screenWidth').textContent = width + 'px';
+            document.getElementById('screenHeight').textContent = height + 'px';
+            document.getElementById('fontSize').textContent = fontSize;
+            document.getElementById('deviceType').textContent = deviceType;
+        }
+
+        updateInfo();
+        window.addEventListener('resize', updateInfo);
+    </script>
+</body>
+
+</html>
